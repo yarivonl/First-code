@@ -1,5 +1,5 @@
 import { searchFlights, searchHotels } from './api';
-import { Trip, Flight, Hotel } from '@/types';
+import { Trip } from '@/types';
 import { REGIONS } from './regions';
 
 export async function generateTrips(

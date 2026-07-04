@@ -9,7 +9,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto text-center">
           <h1 className="text-5xl font-extrabold mb-6">Your Perfect Trip, Simplified.</h1>
           <p className="text-xl mb-10 text-blue-100">
-            We find the best flight and hotel combos so you don't have to.
+            We find the best flight and hotel combos so you don&apos;t have to.
           </p>
           <SearchForm />
         </div>
