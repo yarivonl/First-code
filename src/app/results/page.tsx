@@ -1,6 +1,7 @@
 import { generateTrips } from "@/lib/trips";
 import { Plane, Hotel as HotelIcon, Star, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default async function ResultsPage({
   searchParams,
@@ -32,8 +33,13 @@ export default async function ResultsPage({
           {trips.map((trip) => (
             <div key={trip.id} className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 flex flex-col md:flex-row">
               <div className="md:w-1/3 relative h-48 md:h-auto">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={trip.hotel.image} alt={trip.hotel.name} className="absolute inset-0 w-full h-full object-cover" />
+                <Image
+                  src={trip.hotel.image}
+                  alt={trip.hotel.name}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                />
               </div>
 
               <div className="p-6 md:w-2/3 flex flex-col justify-between">
