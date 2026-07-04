@@ -31,7 +31,14 @@ export async function generateTrips(
       // Combine flights and hotels into trip packages
       flights.forEach((flight) => {
         hotels.forEach((hotel) => {
-          const totalPrice = flight.price + hotel.pricePerNight * days;
+          // Calculate total price based on passengers and days
+          // flight.price is assumed to be per person
+          // hotel.pricePerNight is assumed to be per room (we assume 2 people per room for this logic)
+          const roomsNeeded = Math.ceil(totalPassengers / 2);
+          const flightTotal = flight.price * totalPassengers;
+          const hotelTotal = hotel.pricePerNight * days * roomsNeeded;
+          const totalPrice = flightTotal + hotelTotal;
+
           allTrips.push({
             id: `${flight.id}-${hotel.id}`,
             flight,

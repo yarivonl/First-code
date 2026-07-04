@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🌍 AI Trip Planner & Referral Engine
 
-## Getting Started
+A modern, high-performance trip planning website built with Next.js 14+, TypeScript, and Tailwind CSS. This application aggregates flight and hotel options based on user preferences and generates referral-ready trip packages.
 
-First, run the development server:
+## 🚀 Features
 
+- **Dynamic Search**: Filter by region (West Europe, East Europe, US East Coast), dates, and family size.
+- **Quality Tiers**: Choose between "Best Quality" (Top airlines & hotels) and "Budget Friendly".
+- **Auto-Aggregation**: Automatically matches flight schedules with hotel availability.
+- **Commission Ready**: Built-in support for referral links to monetize your traffic.
+
+## 🛠 Tech Stack
+
+- **Framework**: [Next.js 14+](https://nextjs.org/) (App Router)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Language**: TypeScript
+
+## 🏁 Getting Started
+
+### 1. Prerequisites
+- Node.js 18.17 or later
+- npm or yarn
+
+### 2. Installation
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Development
+```bash
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) to view the site.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🌐 Going Live (Production)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 1. Connect Real APIs
+The current version uses mock data located in `src/lib/api.ts`. To go live with real data:
+- **Flights**: Sign up for [Amadeus for Developers](https://developers.amadeus.com/) or [Skyscanner API](https://www.travelpayouts.com/).
+- **Hotels**: Use [Booking.com API](https://partner.booking.com/) or [Expedia Rapid](https://www.expediagroup.com/partners/lp/expedia-group-connectivity/).
+- Update the `searchFlights` and `searchHotels` functions in `src/lib/api.ts` to fetch from these services.
 
-## Learn More
+### 2. Set Up Affiliate Links
+To earn commissions:
+- Replace the `referralUrl` logic in `src/lib/api.ts` with your unique affiliate tracking links.
+- Most providers (like Travelpayouts) allow you to append an `ID` or `Marker` to the URL.
 
-To learn more about Next.js, take a look at the following resources:
+### 3. Deploy to Vercel (Recommended)
+1. Push your code to a GitHub/GitLab repository.
+2. Import the project into [Vercel](https://vercel.com/).
+3. It will automatically detect Next.js and deploy your site to a public URL.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📁 Project Structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `src/app`: Routes and Page layouts.
+- `src/components`: UI components (SearchForm, etc.).
+- `src/lib`: Core logic (API services, Trip Aggregator, Region Mapping).
+- `src/types`: TypeScript interfaces.
