@@ -57,3 +57,6 @@ To earn commissions:
 - `src/components`: UI components (SearchForm, etc.).
 - `src/lib`: Core logic (API services, Trip Aggregator, Region Mapping).
 - `src/types`: TypeScript interfaces.
+
+---
+*Last updated with stable Next.js 15 and React 19 dependencies.*
