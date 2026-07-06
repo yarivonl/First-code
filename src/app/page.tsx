@@ -1,6 +1,7 @@
 import SearchForm from "@/components/SearchForm";
 import { Plane, Hotel, Globe } from "lucide-react";
 
+// Main landing page for the Trip Planner
 export default function Home() {
   return (
     <main className="min-h-screen bg-gray-50">
