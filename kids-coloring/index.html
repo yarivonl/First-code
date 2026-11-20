@@ -1097,7 +1097,7 @@ body.painting { background-image: url(assets/bg_paint_l.webp); background-color:
     pairs.forEach((c, k) => { if (c >= 4) { const a = root(Math.floor(k / 65536)), b = root(k % 65536); if (a !== b) par[b] = a; } });
     const groups = new Map();
     for (let l = 0; l < n; l++) { const r = root(l); if (r !== l || groups.has(r)) (groups.get(r) || groups.set(r, [r]).get(r)).push(l); }
-    const remap = new Int32Array(n).map((_, i) => i);
+    const remap = new Int32Array(n).map((_, i) => i), merged = new Int32Array(n).fill(-1);
     groups.forEach(ms => {
       const uniq = [...new Set(ms)];
       if (uniq.length < 6) return;
@@ -1106,6 +1106,15 @@ body.painting { background-image: url(assets/bg_paint_l.webp); background-color:
       if (keep.length < 6) return;
       const to = keep[0];
       keep.forEach(l => { if (l !== to) { remap[l] = to; sizes[to] += sizes[l]; sizes[l] = 0; } });
+      keep.forEach(l => { merged[l] = to; });
+    });
+    // also absorb the partial cells cut off at the edge of a merged texture (half squares at a cone's rim)
+    pairs.forEach((c, k) => {
+      if (c < 2) return;
+      const a = Math.floor(k / 65536), b = k % 65536;
+      [[a, b], [b, a]].forEach(([m, o]) => {
+        if (merged[m] >= 0 && merged[o] < 0 && remap[o] === o && sizes[o] > 0) { const to = merged[m]; remap[o] = to; sizes[to] += sizes[o]; sizes[o] = 0; merged[o] = to; }
+      });
     });
     for (let i = 0; i < N; i++) if (owner[i] >= 0) owner[i] = remap[owner[i]];
     // give every line pixel to its nearest region so fills reach under the ink
