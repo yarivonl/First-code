@@ -1073,50 +1073,104 @@ body.painting { background-image: url(assets/bg_paint_l.webp); background-color:
       }
       sizes.push(cnt); n++;
     }
-    // merge textures: a cluster of many small, similar-size areas split only by thin lines
-    // (waffle cones, woven baskets, shell plates) becomes one area that fills with one tap
-    const SMALL = N * .004, MAXW = 18, pairs = new Map();
-    const addPair = (a, b) => {
-      if (a < 0 || b < 0 || a === b || sizes[a] > SMALL || sizes[b] > SMALL) return;
-      const k = a < b ? a * 65536 + b : b * 65536 + a; pairs.set(k, (pairs.get(k) || 0) + 1);
-    };
+    // ---- merging areas that a child expects to fill together ----
+    // local thickness of each raw ink pixel = min(horizontal run, vertical run)
+    const raw = new Uint8Array(N); for (let i = 0; i < N; i++) raw[i] = gray[i] < 128 ? 1 : 0;
+    const thick = new Uint16Array(N);
     for (let y = 0; y < H; y++) for (let x = 0; x < W;) {
-      const i = y * W + x; if (!mask[i]) { x++; continue; }
-      let e = x; while (e < W && mask[y * W + e]) e++;
-      if (x > 0 && e < W && e - x <= MAXW) addPair(owner[i - 1], owner[y * W + e]);
+      if (!raw[y * W + x]) { x++; continue; }
+      let e = x; while (e < W && raw[y * W + e]) e++;
+      for (let k = x; k < e; k++) thick[y * W + k] = e - x;
       x = e;
     }
     for (let x = 0; x < W; x++) for (let y = 0; y < H;) {
-      const i = y * W + x; if (!mask[i]) { y++; continue; }
-      let e = y; while (e < H && mask[e * W + x]) e++;
-      if (y > 0 && e < H && e - y <= MAXW) addPair(owner[i - W], owner[e * W + x]);
+      if (!raw[y * W + x]) { y++; continue; }
+      let e = y; while (e < H && raw[e * W + x]) e++;
+      for (let k = y; k < e; k++) { const i = k * W + x; if (e - y < thick[i]) thick[i] = e - y; }
       y = e;
     }
+    const hist = new Uint32Array(64); let tot = 0;
+    for (let i = 0; i < N; i++) if (raw[i]) { hist[Math.min(63, thick[i])]++; tot++; }
+    let acc = 0, outlineW = 10;
+    for (let t = 0; t < 64; t++) { acc += hist[t]; if (acc >= tot * .85) { outlineW = t; break; } }
+    const thinW = outlineW * .6;
+    // every crossing of the (gap-closed) ink between two areas: is the ink there thin?
+    const MAXW = 18;
+    const scanPairs = () => {
+      const pairs = new Map();
+      const add = (a, b, mid) => {
+        if (a < 0 || b < 0 || a === b) return;
+        const k = a < b ? a * 65536 + b : b * 65536 + a;
+        const p = pairs.get(k) || pairs.set(k, { c: 0, thin: 0 }).get(k);
+        p.c++; if (raw[mid] && thick[mid] <= thinW) p.thin++;
+      };
+      for (let y = 0; y < H; y++) for (let x = 0; x < W;) {
+        const i = y * W + x; if (!mask[i]) { x++; continue; }
+        let e = x; while (e < W && mask[y * W + e]) e++;
+        if (x > 0 && e < W && e - x <= MAXW) add(owner[i - 1], owner[y * W + e], y * W + ((x + e) >> 1));
+        x = e;
+      }
+      for (let x = 0; x < W; x++) for (let y = 0; y < H;) {
+        const i = y * W + x; if (!mask[i]) { y++; continue; }
+        let e = y; while (e < H && mask[e * W + x]) e++;
+        if (y > 0 && e < H && e - y <= MAXW) add(owner[i - W], owner[e * W + x], ((y + e) >> 1) * W + x);
+        y = e;
+      }
+      return pairs;
+    };
+    const relabel = remap => { for (let i = 0; i < N; i++) if (owner[i] >= 0) owner[i] = remap[owner[i]]; };
     const par = Array.from({ length: n }, (_, i) => i);
     const root = a => { while (par[a] !== a) a = par[a] = par[par[a]]; return a; };
-    pairs.forEach((c, k) => { if (c >= 4) { const a = root(Math.floor(k / 65536)), b = root(k % 65536); if (a !== b) par[b] = a; } });
+
+    // 1) detail lines: areas split only by thin strokes (hair strands, scales, folds, shell ribs) join,
+    //    except a small spot that sits entirely inside one other area (cheeks, spots, buttons)
+    let pairs = scanPairs();
+    const nbrs = Array.from({ length: n }, () => new Set());
+    pairs.forEach((p, k) => { if (p.c >= 3) { const a = Math.floor(k / 65536), b = k % 65536; nbrs[a].add(b); nbrs[b].add(a); } });
+    const enclosedSpot = l => sizes[l] < N * .015 && nbrs[l].size === 1;
+    // the background (touches the page edge) and very large areas never join anything
+    const edge = new Uint8Array(n);
+    for (let x = 0; x < W; x++) { const t = owner[x], bt = owner[(H - 1) * W + x]; if (t >= 0) edge[t] = 1; if (bt >= 0) edge[bt] = 1; }
+    for (let y = 0; y < H; y++) { const l = owner[y * W], r = owner[y * W + W - 1]; if (l >= 0) edge[l] = 1; if (r >= 0) edge[r] = 1; }
+    const fixed = l => edge[l] || sizes[l] > N * .08;
+    pairs.forEach((p, k) => {
+      if (p.c < 6 || p.thin < p.c * .85) return;
+      const a = Math.floor(k / 65536), b = k % 65536;
+      if (fixed(a) || fixed(b) || enclosedSpot(a) || enclosedSpot(b)) return;
+      const ra = root(a), rb = root(b); if (ra !== rb) par[rb] = ra;
+    });
+    let remap = new Int32Array(n);
+    for (let l = 0; l < n; l++) { const r = root(l); remap[l] = r; if (r !== l) { sizes[r] += sizes[l]; sizes[l] = 0; } }
+    relabel(remap);
+
+    // 2) textures: a cluster of many small, similar-size areas (waffle cones, baskets, coins), plus its cut-off edge cells
+    const SMALL = N * .004;
+    pairs = scanPairs();
+    for (let l = 0; l < n; l++) par[l] = l;
+    pairs.forEach((p, k) => {
+      const a = Math.floor(k / 65536), b = k % 65536;
+      if (p.c >= 4 && sizes[a] > 0 && sizes[b] > 0 && sizes[a] <= SMALL && sizes[b] <= SMALL) { const ra = root(a), rb = root(b); if (ra !== rb) par[rb] = ra; }
+    });
     const groups = new Map();
-    for (let l = 0; l < n; l++) { const r = root(l); if (r !== l || groups.has(r)) (groups.get(r) || groups.set(r, [r]).get(r)).push(l); }
-    const remap = new Int32Array(n).map((_, i) => i), merged = new Int32Array(n).fill(-1);
+    for (let l = 0; l < n; l++) if (sizes[l] > 0) { const r = root(l); (groups.get(r) || groups.set(r, []).get(r)).push(l); }
+    remap = new Int32Array(n).map((_, i) => i);
+    const merged = new Int32Array(n).fill(-1);
     groups.forEach(ms => {
-      const uniq = [...new Set(ms)];
-      if (uniq.length < 6) return;
-      const med = uniq.map(l => sizes[l]).sort((a, b) => a - b)[uniq.length >> 1];
-      const keep = uniq.filter(l => sizes[l] > med / 3 && sizes[l] < med * 3);
+      if (ms.length < 6) return;
+      const med = ms.map(l => sizes[l]).sort((a, b) => a - b)[ms.length >> 1];
+      const keep = ms.filter(l => sizes[l] > med / 3 && sizes[l] < med * 3);
       if (keep.length < 6) return;
       const to = keep[0];
-      keep.forEach(l => { if (l !== to) { remap[l] = to; sizes[to] += sizes[l]; sizes[l] = 0; } });
-      keep.forEach(l => { merged[l] = to; });
+      keep.forEach(l => { merged[l] = to; if (l !== to) { remap[l] = to; sizes[to] += sizes[l]; sizes[l] = 0; } });
     });
-    // also absorb the partial cells cut off at the edge of a merged texture (half squares at a cone's rim)
-    pairs.forEach((c, k) => {
-      if (c < 2) return;
+    pairs.forEach((p, k) => {
+      if (p.c < 2) return;
       const a = Math.floor(k / 65536), b = k % 65536;
       [[a, b], [b, a]].forEach(([m, o]) => {
-        if (merged[m] >= 0 && merged[o] < 0 && remap[o] === o && sizes[o] > 0) { const to = merged[m]; remap[o] = to; sizes[to] += sizes[o]; sizes[o] = 0; merged[o] = to; }
+        if (merged[m] >= 0 && merged[o] < 0 && sizes[o] > 0 && sizes[o] <= SMALL) { const to = merged[m]; remap[o] = to; sizes[to] += sizes[o]; sizes[o] = 0; merged[o] = to; }
       });
     });
-    for (let i = 0; i < N; i++) if (owner[i] >= 0) owner[i] = remap[owner[i]];
+    relabel(remap);
     // give every line pixel to its nearest region so fills reach under the ink
     const q = new Int32Array(N); let qh = 0, qt = 0;
     for (let i = 0; i < N; i++) if (owner[i] >= 0) q[qt++] = i;
