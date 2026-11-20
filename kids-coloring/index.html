@@ -1,0 +1,1057 @@
+<title>צובעים בקסם</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+/* Layout: one-screen tablet app. Home = sticker-card gallery; paint = tools | drawing | palette (side columns in landscape, stacked in portrait). Single bright look on purpose. */
+:root {
+  --paper: #fff7e8;
+  --paper-dot: #f6e4c4;
+  --ink: #2b2140;
+  --sun: #ffd93d;
+  --mint: #7ee0c3;
+  --rose: #ff6fb5;
+  --card-castle: #ffd6ec;
+  --card-animal: #ffe3b0;
+  --card-space: #d3dbff;
+  --card-sea: #c4efec;
+  --card-sweets: #ffd5c7;
+  --card-garden: #d4f2c4;
+  --white: #ffffff;
+  --danger: #ff4d4d;
+  color-scheme: light;
+}
+html, body { height: 100%; }
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  background: var(--paper);
+  background-image: radial-gradient(var(--paper-dot) 2px, transparent 2.5px);
+  background-size: 28px 28px;
+  color: var(--ink);
+  overflow: hidden;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+#app {
+  height: 100%;
+  box-sizing: border-box;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 12px;
+}
+button { font: inherit; color: var(--ink); cursor: pointer; }
+button:focus-visible { outline: 4px solid var(--rose); outline-offset: 3px; }
+
+/* shared drawing styles */
+.r { fill: var(--white); stroke: var(--ink); stroke-width: 4; stroke-linejoin: round; transform-box: fill-box; transform-origin: center; }
+.d { fill: none; stroke: var(--ink); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.k { fill: var(--ink); pointer-events: none; }
+.w { fill: var(--white); pointer-events: none; }
+.r.pop { animation: pop .28s ease-out; }
+@keyframes pop { 45% { transform: scale(1.05); } }
+
+/* chunky sticker button */
+.btn {
+  width: 64px; height: 64px; flex: none;
+  border-radius: 22px;
+  border: 4px solid var(--ink);
+  background: var(--white);
+  box-shadow: 0 6px 0 var(--ink);
+  display: grid; place-items: center;
+  padding: 0;
+  transition: transform .08s, box-shadow .08s, background .2s;
+}
+.btn:active { transform: translateY(5px); box-shadow: 0 1px 0 var(--ink); }
+.btn svg { width: 34px; height: 34px; }
+.btn.yellow { background: var(--sun); }
+.btn.mint { background: var(--mint); }
+.btn.armed { background: var(--danger); animation: wiggle .4s infinite; }
+.btn.off { opacity: .55; }
+@keyframes wiggle { 25% { transform: rotate(-8deg); } 75% { transform: rotate(8deg); } }
+
+/* home */
+#home { height: 100%; display: flex; flex-direction: column; gap: 14px; }
+.home-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.logo { height: 72px; width: auto; flex: none; }
+.gallery {
+  flex: 1; min-height: 0; overflow-y: auto;
+  display: grid; gap: 22px;
+  grid-template-columns: repeat(auto-fill, minmax(min(170px, 42vw), 1fr));
+  align-content: start;
+  padding: 6px 4px 18px;
+}
+.card {
+  position: relative;
+  aspect-ratio: 1; max-width: 100%;
+  border-radius: 30px;
+  border: 4px solid var(--ink);
+  box-shadow: 0 8px 0 var(--ink);
+  padding: 10px;
+  transition: transform .1s, box-shadow .1s;
+}
+.card:active { transform: translateY(6px); box-shadow: 0 2px 0 var(--ink); }
+.card svg { width: 100%; height: 100%; display: block; }
+.card .badge {
+  position: absolute; top: -14px; right: -10px; width: 52px; height: 52px;
+  filter: drop-shadow(0 3px 0 var(--ink));
+}
+.t-castle { background: var(--card-castle); }
+.t-animal { background: var(--card-animal); }
+.t-space { background: var(--card-space); }
+.t-sea { background: var(--card-sea); }
+.t-sweets { background: var(--card-sweets); }
+.t-garden { background: var(--card-garden); }
+
+/* category tiles: cover drawing + a progress row of stars */
+.gallery.cats {
+  grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 40px;
+  width: 100%; max-width: max(320px, calc((100vh - 210px) * 1.5 + 44px)); margin-inline: auto; box-sizing: border-box;
+}
+.card .stars {
+  position: absolute; left: 50%; bottom: -20px; transform: translateX(-50%);
+  display: flex; gap: 4px; padding: 5px 10px;
+  background: var(--white); border: 4px solid var(--ink); border-radius: 999px;
+}
+.card .stars svg { width: 24px; height: 24px; }
+.view { height: 100%; display: flex; flex-direction: column; gap: 14px; }
+.view-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.cat-icon { width: 72px; height: 72px; border-radius: 22px; border: 4px solid var(--ink); padding: 4px; box-sizing: border-box; }
+.cat-icon svg { width: 100%; height: 100%; display: block; }
+
+/* paint */
+#paint {
+  height: 100%;
+  display: grid; gap: 12px;
+  grid-template-areas: "tools" "stage" "pal";
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+.tools { grid-area: tools; display: flex; gap: 12px; align-items: center; }
+.tools .spacer { flex: 1; }
+.stage { grid-area: stage; min-height: 0; display: grid; place-items: center; touch-action: none; }
+.stage svg {
+  width: 100%; height: 100%; max-width: 100%;
+  overflow: hidden;
+  filter: drop-shadow(0 8px 0 var(--ink));
+}
+.pal {
+  grid-area: pal;
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+  padding-bottom: 6px;
+}
+.sw {
+  width: 54px; height: 54px; flex: none; padding: 0;
+  border-radius: 50%;
+  border: 4px solid var(--ink);
+  box-shadow: 0 4px 0 var(--ink);
+  transition: transform .15s;
+  display: grid; place-items: center;
+}
+.sw svg { width: 30px; height: 30px; }
+.sw.on { transform: scale(1.22) translateY(-4px); box-shadow: 0 0 0 4px var(--white), 0 0 0 8px var(--ink); }
+
+@media (orientation: landscape) and (min-width: 700px) {
+  #paint {
+    grid-template-areas: "tools stage pal";
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .tools { flex-direction: column; }
+  .pal { display: grid; grid-template-columns: repeat(3, 54px); align-content: center; gap: 12px; padding: 0 8px; }
+}
+
+/* effects */
+.spark { position: fixed; width: 22px; height: 22px; pointer-events: none; z-index: 20; animation: fly .6s ease-out forwards; }
+@keyframes fly { to { transform: translate(var(--dx), var(--dy)) scale(.2) rotate(180deg); opacity: 0; } }
+#confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 30; }
+.defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+/* "alive" celebration: each drawing's groups carry their own pivot via inline transform-origin */
+g[class^="a-"] { transform-box: view-box; }
+.alive .a-pulse { animation: pulse .7s ease-in-out infinite alternate; }
+.alive .a-drift { animation: drift 2.4s ease-in-out infinite alternate; }
+.alive .a-flag { animation: flag .3s ease-in-out infinite alternate; }
+.alive .a-beat { animation: beat .6s ease-in-out infinite; }
+.alive .a-tw { animation: tw .8s ease-in-out infinite alternate; }
+.alive .a-bob { animation: bob .6s ease-in-out infinite alternate; }
+.alive .a-flicker { animation: flicker .4s steps(2) infinite; }
+.alive .a-tail { animation: wag .32s ease-in-out infinite alternate; }
+.alive .a-head { animation: tilt 1.1s ease-in-out infinite alternate; }
+.alive .a-blink { animation: blink 1.8s infinite; }
+.alive .a-sway { animation: sway 1.3s ease-in-out infinite alternate; }
+.alive .a-sway2 { animation: sway 1.3s ease-in-out infinite alternate-reverse; }
+.alive .a-fly { animation: hover 1.4s ease-in-out infinite alternate; }
+.alive .a-wing { animation: flap .2s ease-in-out infinite alternate; }
+.alive .a-flame { animation: flame .1s linear infinite alternate; }
+.alive .a-launch { animation: launch 3.6s both; }
+.alive .a-float { animation: float 1.5s ease-in-out infinite alternate; }
+.alive .a-jump { animation: jump .7s ease-in-out infinite; }
+.alive .a-rise { animation: rise 1.2s ease-in infinite; }
+.alive .a-swim { animation: swim 2.4s ease-in-out infinite; }
+.alive .a-wag { animation: wag .22s ease-in-out infinite alternate; }
+.alive .a-wig { animation: wig .45s ease-in-out infinite alternate; }
+.alive .a-bob2 { animation: bob2 .9s ease-in-out infinite alternate; }
+.alive .a-spin { animation: spin 2s linear infinite; }
+@keyframes pulse { to { transform: scale(1.18); } }
+@keyframes drift { to { transform: translateX(-34px); } }
+@keyframes flag { from { transform: skewY(-14deg); } to { transform: skewY(14deg); } }
+@keyframes beat { 30% { transform: scale(1.35); } 60% { transform: scale(1); } }
+@keyframes tw { to { transform: rotate(36deg) scale(1.4); } }
+@keyframes bob { from { transform: rotate(-4deg); } to { transform: translateY(-16px) rotate(4deg); } }
+@keyframes flicker { 50% { opacity: 0; } }
+@keyframes wag { from { transform: rotate(-14deg); } to { transform: rotate(16deg); } }
+@keyframes tilt { from { transform: rotate(-7deg); } to { transform: rotate(7deg); } }
+@keyframes blink { 0%, 42%, 52%, 100% { transform: scaleY(1); } 47% { transform: scaleY(.1); } }
+@keyframes sway { from { transform: rotate(-9deg); } to { transform: rotate(9deg); } }
+@keyframes hover { to { transform: translateY(-28px); } }
+@keyframes flap { to { transform: scaleX(.3); } }
+@keyframes flame { to { transform: scale(.85, 1.4); } }
+@keyframes launch {
+  0% { transform: none; } 5% { transform: translateX(-4px); } 10% { transform: translateX(4px); }
+  15% { transform: translateX(-4px); } 20% { transform: translateX(4px); } 25% { transform: translateX(-4px); }
+  30% { transform: translateX(4px); }
+  33% { transform: none; animation-timing-function: ease-in; }
+  62% { transform: translateY(-470px); }
+  62.5% { transform: translateY(470px); animation-timing-function: ease-out; }
+  100% { transform: none; }
+}
+@keyframes float { to { transform: translate(-8px, 10px) rotate(-12deg); } }
+@keyframes jump {
+  0%, 100% { transform: none; } 15% { transform: scale(1.15, .85); }
+  45% { transform: translateY(-42px) scale(.92, 1.1); } 75% { transform: none; }
+}
+@keyframes rise { 0% { transform: translateY(30px); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(-45px); opacity: 0; } }
+@keyframes swim {
+  0%, 100% { transform: none; } 25% { transform: translate(-26px, -10px) rotate(-5deg); }
+  50% { transform: none; } 75% { transform: translate(26px, 10px) rotate(5deg); }
+}
+@keyframes wig { from { transform: rotate(-11deg); } to { transform: rotate(11deg); } }
+@keyframes bob2 { to { transform: translateY(-18px); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+.alive .a-nod { animation: nod 1.2s ease-in-out infinite alternate; }
+.alive .a-wave { animation: wave .5s ease-in-out infinite alternate; }
+.alive .a-ear { animation: ear .4s ease-in-out infinite alternate; }
+.alive .a-ear2 { animation: ear2 .4s ease-in-out infinite alternate; }
+.alive .a-pant { animation: pant .25s ease-in-out infinite alternate; }
+.alive .a-hop { animation: hop .7s ease-in-out infinite; }
+.alive .a-ufo { animation: ufo 1.2s ease-in-out infinite alternate; }
+.alive .a-light { animation: light .3s ease-in-out infinite alternate; }
+.alive .a-beam { animation: beam .25s ease-in-out infinite alternate; }
+.alive .a-rock { animation: rock 2s ease-in-out infinite alternate; }
+.alive .a-drift2 { animation: drift2 2.4s ease-in-out infinite alternate; }
+.alive .a-bob3 { animation: bob3 1.2s ease-in-out infinite alternate; }
+.alive .a-spout { animation: spout .45s ease-in-out infinite alternate; }
+.alive .a-side { animation: side 1.6s ease-in-out infinite alternate; }
+.alive .a-snap { animation: snap .25s ease-in-out infinite alternate; }
+.alive .a-squash { animation: squash .5s ease-in-out infinite alternate; }
+.alive .a-bounce { animation: bounce .5s ease-in-out infinite alternate; }
+.alive .a-jelly { animation: jelly .4s ease-in-out infinite alternate; }
+.alive .a-drip { animation: drip 1s ease-in infinite; }
+.alive .a-roll { animation: roll 2s ease-in-out infinite alternate; }
+.alive .a-buzz { animation: buzz 1.6s ease-in-out infinite; }
+.alive .a-spin4 { animation: spin 4s linear infinite; }
+.alive .a-sway3 { animation: sway3 1s ease-in-out infinite alternate; }
+.alive .a-fall { animation: fall 3s infinite; }
+.alive .a-crawl { animation: crawl 3s ease-in-out infinite alternate; }
+.alive .a-glow { animation: glow .8s ease-in-out infinite alternate; }
+.alive .a-rain { animation: rain .8s linear infinite; }
+@keyframes nod { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
+@keyframes wave { from { transform: rotate(-14deg); } to { transform: rotate(10deg); } }
+@keyframes ear { from { transform: rotate(-14deg); } to { transform: rotate(8deg); } }
+@keyframes ear2 { from { transform: rotate(14deg); } to { transform: rotate(-8deg); } }
+@keyframes pant { to { transform: scaleY(1.35); } }
+@keyframes hop {
+  0%, 100% { transform: none; } 15% { transform: scale(1.1, .88); }
+  45% { transform: translateY(-60px) scale(.94, 1.08); } 75% { transform: none; }
+}
+@keyframes ufo { from { transform: rotate(-5deg); } to { transform: translateY(-18px) rotate(5deg); } }
+@keyframes light { to { transform: scale(1.45); } }
+@keyframes beam { to { opacity: .45; } }
+@keyframes rock { from { transform: rotate(-8deg); } to { transform: rotate(8deg); } }
+@keyframes drift2 { to { transform: translateX(30px); } }
+@keyframes bob3 { from { transform: rotate(-3deg); } to { transform: translateY(12px) rotate(3deg); } }
+@keyframes spout { from { transform: scaleY(.3); } to { transform: scaleY(1.25); } }
+@keyframes side { from { transform: translateX(-50px); } to { transform: translateX(50px); } }
+@keyframes snap { to { transform: rotate(-22deg); } }
+@keyframes squash { from { transform: scale(1.08, .9); } to { transform: scale(.95, 1.08); } }
+@keyframes bounce { to { transform: translateY(-24px); } }
+@keyframes jelly { from { transform: rotate(-6deg) skewX(4deg); } to { transform: rotate(6deg) skewX(-4deg); } }
+@keyframes drip { 70% { transform: translateY(16px) scaleY(1.3); } }
+@keyframes roll { from { transform: translateX(-70px) rotate(-90deg); } to { transform: translateX(70px) rotate(90deg); } }
+@keyframes buzz {
+  0%, 100% { transform: none; } 25% { transform: translate(-60px, -30px) rotate(-10deg); }
+  50% { transform: translate(-120px, 10px); } 75% { transform: translate(-50px, 40px) rotate(10deg); }
+}
+@keyframes sway3 { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
+@keyframes fall {
+  0%, 25% { transform: none; animation-timing-function: ease-in; }
+  50% { transform: translateY(238px); animation-timing-function: ease-out; }
+  58% { transform: translateY(215px); animation-timing-function: ease-in; }
+  66%, 100% { transform: translateY(238px); }
+}
+@keyframes crawl { from { transform: translateX(-30px) scaleX(.97); } to { transform: translateX(30px) scaleX(1.03); } }
+@keyframes glow { to { transform: scale(1.05); } }
+@keyframes rain { 0% { transform: translateY(-10px); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(30px); opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .r.pop, .btn.armed, .spark, .alive g { animation: none !important; }
+  .spark { display: none; }
+}
+</style>
+
+<svg class="defs" aria-hidden="true">
+  <defs>
+    <linearGradient id="rainbow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff4d4d"/><stop offset=".2" stop-color="#ff9f1c"/>
+      <stop offset=".4" stop-color="#ffd93d"/><stop offset=".6" stop-color="#2fbf71"/>
+      <stop offset=".8" stop-color="#4cc9f0"/><stop offset="1" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
+      <rect width="22" height="22" fill="#ffc2e2"/><circle cx="11" cy="11" r="5" fill="#ff6fb5"/>
+    </pattern>
+    <pattern id="gold" width="34" height="34" patternUnits="userSpaceOnUse">
+      <rect width="34" height="34" fill="#ffcf3d"/>
+      <path d="M17 7 L19.5 14.5 L27 17 L19.5 19.5 L17 27 L14.5 19.5 L7 17 L14.5 14.5Z" fill="#fff6c9"/>
+    </pattern>
+  </defs>
+</svg>
+
+<div id="app">
+  <section id="home">
+    <div class="home-top">
+      <svg class="logo" viewBox="0 0 200 72" aria-hidden="true">
+        <path d="M14 58 Q40 4 100 10 Q160 4 186 58" fill="none" stroke="#ff4d4d" stroke-width="10" stroke-linecap="round"/>
+        <path d="M30 60 Q52 22 100 26 Q148 22 170 60" fill="none" stroke="#ffd93d" stroke-width="10" stroke-linecap="round"/>
+        <path d="M46 62 Q64 40 100 42 Q136 40 154 62" fill="none" stroke="#4cc9f0" stroke-width="10" stroke-linecap="round"/>
+        <path d="M100 30 L106 46 L122 48 L110 58 L114 72 L100 64 L86 72 L90 58 L78 48 L94 46Z" fill="#ffd93d" stroke="#2b2140" stroke-width="4" stroke-linejoin="round"/>
+      </svg>
+      <button class="btn mint" id="fsBtn" aria-label="מסך מלא">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#2b2140" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      </button>
+    </div>
+    <div class="gallery cats" id="gallery"></div>
+  </section>
+
+  <section id="cat" class="view" hidden>
+    <div class="view-top">
+      <button class="btn yellow" id="catHomeBtn" aria-label="חזרה לקטגוריות">
+        <svg viewBox="0 0 24 24" fill="#fff" stroke="#2b2140" stroke-width="2.4" stroke-linejoin="round"><path d="M3 11 L12 3 L21 11 V21 H15 V15 H9 V21 H3Z"/></svg>
+      </button>
+      <div class="cat-icon" id="catIcon"></div>
+    </div>
+    <div class="gallery" id="catGallery"></div>
+  </section>
+
+  <section id="paint" hidden>
+    <div class="tools">
+      <button class="btn yellow" id="homeBtn" aria-label="חזרה לציורים">
+        <svg viewBox="0 0 24 24" fill="#fff" stroke="#2b2140" stroke-width="2.4" stroke-linejoin="round"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg>
+      </button>
+      <span class="spacer"></span>
+      <button class="btn" id="undoBtn" aria-label="ביטול">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#2b2140" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5 L4 10 L9 15"/><path d="M4 10 H14 a6 6 0 0 1 0 12 H10"/></svg>
+      </button>
+      <button class="btn" id="clearBtn" aria-label="מחיקת הכל">
+        <svg viewBox="0 0 24 24" fill="#fff" stroke="#2b2140" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><path d="M5 7 H19 L17.5 21 H6.5Z"/><path d="M3 7 H21 M9 7 V4 H15 V7" fill="none"/></svg>
+      </button>
+      <button class="btn" id="soundBtn" aria-label="צלילים">
+        <svg viewBox="0 0 24 24" fill="#fff" stroke="#2b2140" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><path d="M4 9 H8 L13 5 V19 L8 15 H4Z"/><path id="waves" d="M16.5 9 a4 4 0 0 1 0 6 M19 6.5 a8 8 0 0 1 0 11" fill="none"/></svg>
+      </button>
+      <button class="btn yellow" id="partyBtn" aria-label="חגיגה">
+        <svg viewBox="0 0 24 24" fill="#fff" stroke="#2b2140" stroke-width="2.2" stroke-linejoin="round"><path d="M12 2.5 L14.8 9 L21.5 9.4 L16.3 13.8 L18 20.6 L12 16.9 L6 20.6 L7.7 13.8 L2.5 9.4 L9.2 9Z"/></svg>
+      </button>
+    </div>
+    <div class="stage" id="stage"></div>
+    <div class="pal" id="pal"></div>
+  </section>
+</div>
+<canvas id="confetti"></canvas>
+
+<script>
+(() => {
+  // ---------- drawing helpers ----------
+  const f = n => +n.toFixed(1);
+  const starD = (cx, cy, R, r = R * 0.45, n = 5) => {
+    let d = '';
+    for (let i = 0; i < n * 2; i++) {
+      const a = -Math.PI / 2 + i * Math.PI / n, rr = i % 2 ? r : R;
+      d += (i ? 'L' : 'M') + f(cx + rr * Math.cos(a)) + ' ' + f(cy + rr * Math.sin(a));
+    }
+    return d + 'Z';
+  };
+  const P = d => `<path class="r" d="${d}"/>`;
+  const C = (x, y, r) => `<circle class="r" cx="${x}" cy="${y}" r="${r}"/>`;
+  const E = (x, y, rx, ry) => `<ellipse class="r" cx="${x}" cy="${y}" rx="${rx}" ry="${ry}"/>`;
+  const B = (x, y, w, h, rx = 0) => `<rect class="r" x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}"/>`;
+  const S = (x, y, R, r) => P(starD(x, y, R, r));
+  const L = d => `<path class="d" d="${d}"/>`;
+  const K = (x, y, r) => `<circle class="k" cx="${x}" cy="${y}" r="${r}"/>`;
+  const W = (x, y, r) => `<circle class="w" cx="${x}" cy="${y}" r="${r}"/>`;
+  const BG = `<rect class="r bg" x="2" y="2" width="396" height="396" rx="26"/>`;
+  const ground = (a, b, c) => P(`M2 ${a} Q100 ${b} 200 ${c} T398 ${a - 6} V372 a24 24 0 0 1 -24 24 H26 a24 24 0 0 1 -24 -24Z`);
+  const flower = (x, y, bottom = 352) => L(`M${x} ${y + 18} V${bottom}`) +
+    [0, 72, 144, 216, 288].map(a => C(f(x + 17 * Math.cos(a * Math.PI / 180)), f(y + 17 * Math.sin(a * Math.PI / 180)), 13)).join('') + C(x, y, 11);
+  const pt = (cx, cy, r, a) => f(cx + r * Math.cos(a)) + ' ' + f(cy + r * Math.sin(a));
+  const H = (cx, cy, s) => `M${cx} ${cy + s} C${cx - 1.6 * s} ${cy - .2 * s} ${cx - .6 * s} ${cy - 1.4 * s} ${cx} ${cy - .5 * s} C${cx + .6 * s} ${cy - 1.4 * s} ${cx + 1.6 * s} ${cy - .2 * s} ${cx} ${cy + s}Z`;
+  const cloud = (x, y, s) => `M${x} ${y} a${16 * s} ${16 * s} 0 0 1 ${8 * s} ${-28 * s} a${22 * s} ${22 * s} 0 0 1 ${40 * s} 0 a${16 * s} ${16 * s} 0 0 1 ${2 * s} ${28 * s}z`;
+  const drop = (x, y) => `M${x} ${y} Q${x + 13} ${y + 20} ${x} ${y + 24} Q${x - 13} ${y + 20} ${x} ${y}Z`;
+  const band = (r1, r2) => `M${200 - r2} 280 A${r2} ${r2} 0 0 1 ${200 + r2} 280 L${200 + r1} 280 A${r1} ${r1} 0 0 0 ${200 - r1} 280Z`;
+  const rays = (cx, cy, r1, r2, n) => [...Array(n)].map((_, i) => { const a = i / n * 2 * Math.PI; return `M${pt(cx, cy, r1, a)} L${pt(cx, cy, r2, a)}`; }).join(' ');
+  // pinwheel slices with curved edges: each slice is its own colorable region
+  const swirl = (cx, cy, R, n) => [...Array(n)].map((_, k) => {
+    const a0 = k * 2 * Math.PI / n, a1 = a0 + 2 * Math.PI / n, tw = .9;
+    return P(`M${cx} ${cy} Q${pt(cx, cy, R * .6, a0 + tw)} ${pt(cx, cy, R, a0)} A${R} ${R} 0 0 1 ${pt(cx, cy, R, a1)} Q${pt(cx, cy, R * .6, a1 + tw)} ${cx} ${cy}Z`);
+  }).join('');
+  const wavy = (cx, cy, R, amp, n, steps = 108) => {
+    let d = '';
+    for (let i = 0; i <= steps; i++) { const a = i / steps * 2 * Math.PI; d += (i ? 'L' : 'M') + pt(cx, cy, R + amp * Math.sin(n * a), a); }
+    return d + 'Z';
+  };
+  const bumps = (cx, cy, R, n) => {
+    const ps = [...Array(n)].map((_, i) => pt(cx, cy, R, i / n * 2 * Math.PI - Math.PI / 2));
+    const rb = f(R * Math.sin(Math.PI / n) * 1.15);
+    return `M${ps[0]}` + ps.slice(1).concat([ps[0]]).map(p => ` A${rb} ${rb} 0 0 1 ${p}`).join('') + 'Z';
+  };
+
+  // ---------- the drawings (all original). Region order must stay stable: saved fills are stored by index. ----------
+  const G = (cls, inner, ox, oy, extra = '') => `<g class="${cls}" style="transform-origin:${ox}px ${oy}px;${extra}">${inner}</g>`;
+  const TW = (x, y, R, r, i = 0) => G('a-tw', S(x, y, R, r), x, y, `animation-delay:${i * -0.3}s`);
+  const PAGES = [
+    { id: 'castle', t: 'castle', svg:
+      BG + G('a-pulse', C(42, 44, 22), 42, 44) + G('a-drift', P('M326 66 a16 16 0 0 1 8 -28 a22 22 0 0 1 40 0 a16 16 0 0 1 2 28z'), 350, 50) + ground(330, 310, 328) +
+      B(135, 184, 22, 20) + B(243, 184, 22, 20) + B(165, 120, 70, 84) + P('M155 122 L200 40 L245 122Z') +
+      L('M200 42 V14') + G('a-flag', P('M200 14 L232 22 L200 30Z'), 200, 22) + C(200, 160, 14) +
+      B(120, 200, 160, 140) + B(55, 150, 75, 190) + B(270, 150, 75, 190) +
+      P('M45 152 L92 68 L140 152Z') + P('M260 152 L307 68 L355 152Z') +
+      P('M80 222 v-22 a12 12 0 0 1 24 0 v22z') + P('M296 222 v-22 a12 12 0 0 1 24 0 v22z') +
+      G('a-beat', P('M200 248 C168 226 184 204 200 218 C216 204 232 226 200 248Z'), 200, 230) +
+      P('M172 340 V292 a28 28 0 0 1 56 0 V340Z') + K(217, 316, 4)
+    },
+    { id: 'crown', t: 'castle', svg:
+      BG + TW(62, 70, 28, undefined, 0) + TW(340, 66, 22, undefined, 1) + TW(344, 332, 20, undefined, 2) + TW(56, 336, 22, undefined, 3) +
+      G('a-bob',
+        P('M80 290 L62 140 L135 205 L200 110 L265 205 L338 140 L320 290Z') +
+        C(62, 134, 14) + C(200, 104, 16) + C(338, 134, 14) +
+        P('M200 158 L222 198 L200 238 L178 198Z') + C(126, 242, 13) + C(274, 242, 13) +
+        B(70, 270, 260, 50, 14) + C(200, 295, 15) + E(134, 295, 19, 11) + E(266, 295, 19, 11), 200, 300) +
+      G('a-flicker', L('M118 92 v18 M109 101 h18 M282 92 v18 M273 101 h18 M200 340 v18 M191 349 h18'), 200, 200)
+    },
+    { id: 'cat', t: 'animal', svg:
+      BG + E(200, 362, 168, 26) +
+      G('a-tail', P('M285 330 Q372 322 362 252 Q356 220 334 230 Q346 262 336 290 Q322 306 282 304Z'), 290, 318) +
+      E(200, 290, 95, 72) +
+      G('a-head',
+        P('M128 132 L130 50 L190 98Z') + P('M272 132 L270 50 L210 98Z') +
+        P('M146 112 L142 74 L176 98Z') + P('M254 112 L258 74 L224 98Z') + C(200, 170, 80), 200, 245) +
+      E(200, 306, 50, 42) + E(160, 356, 30, 16) + E(240, 356, 30, 16) +
+      P('M135 225 Q200 262 265 225 L262 242 Q200 280 138 242Z') + C(200, 264, 11) + L('M193 267 H207') +
+      G('a-head',
+        G('a-blink', E(168, 160, 14, 18) + E(232, 160, 14, 18) + K(170, 163, 8) + K(234, 163, 8) + W(173, 159, 3) + W(237, 159, 3), 200, 160) +
+        C(146, 200, 11) + C(254, 200, 11) + P('M189 187 H211 L200 200Z') +
+        L('M200 200 Q200 214 186 214 M200 200 Q200 214 214 214') +
+        L('M118 184 L158 190 M116 200 L156 198 M282 184 L242 190 M284 200 L244 198'), 200, 245)
+    },
+    { id: 'butterfly', t: 'animal', svg:
+      BG + ground(340, 320, 338) + G('a-sway', flower(58, 296), 58, 352) + G('a-sway2', flower(342, 296), 342, 352) +
+      G('a-fly',
+        G('a-wing',
+          P('M195 185 C150 70 40 60 55 145 C65 195 140 210 195 205Z') + P('M195 212 C140 205 75 250 105 300 C135 335 185 280 195 232Z') +
+          C(112, 140, 22) + C(160, 172, 10) + C(138, 262, 15), 200, 210) +
+        G('a-wing',
+          '<g transform="matrix(-1 0 0 1 400 0)">' +
+          P('M195 185 C150 70 40 60 55 145 C65 195 140 210 195 205Z') + P('M195 212 C140 205 75 250 105 300 C135 335 185 280 195 232Z') +
+          C(112, 140, 22) + C(160, 172, 10) + C(138, 262, 15) + '</g>', 200, 210) +
+        E(200, 218, 13, 58) + L('M193 134 Q180 100 165 92 M207 134 Q220 100 235 92') +
+        C(162, 90, 8) + C(238, 90, 8) + C(200, 148, 18) + K(194, 145, 3) + K(206, 145, 3) + L('M194 154 Q200 159 206 154'), 200, 210)
+    },
+    { id: 'rocket', t: 'space', svg:
+      BG + C(66, 334, 46) + C(52, 322, 9) + C(82, 350, 7) +
+      G('a-float', P('M338 34 a44 44 0 1 0 38 70 a34 34 0 1 1 -38 -70Z'), 350, 70) +
+      TW(60, 70, 18, undefined, 0) + TW(128, 132, 11, undefined, 1) + TW(306, 172, 13, undefined, 2) + TW(340, 286, 17, undefined, 3) + TW(276, 360, 11, undefined, 4) +
+      G('a-launch',
+        G('a-flame', P('M163 280 Q168 345 200 378 Q232 345 237 280Z') + P('M180 280 Q186 325 200 352 Q214 325 220 280Z'), 200, 282) +
+        P('M155 215 L100 290 L105 326 L152 286Z') + P('M245 215 L300 290 L295 326 L248 286Z') +
+        P('M200 45 C255 95 262 185 250 285 H150 C138 185 145 95 200 45Z') +
+        P('M200 45 C222 65 237 88 245 115 H155 C163 88 178 65 200 45Z') +
+        P('M150 238 H251 V258 H150Z') + B(168, 282, 64, 16, 5) +
+        C(200, 180, 32) + C(200, 180, 21) + L('M188 172 a14 14 0 0 1 10 -8'), 200, 200)
+    },
+    { id: 'planet', t: 'space', svg:
+      BG + TW(50, 60, 18, undefined, 0) + TW(92, 150, 9, undefined, 1) + TW(332, 172, 10, undefined, 2) + TW(60, 334, 15, undefined, 3) + TW(350, 330, 17, undefined, 4) +
+      G('a-float', C(336, 70, 26) + C(328, 62, 7) + C(346, 80, 5), 336, 70) +
+      '<path class="r" fill-rule="evenodd" d="M50 232 A150 40 0 1 0 350 232 A150 40 0 1 0 50 232Z M80 232 A120 25 0 1 0 320 232 A120 25 0 1 0 80 232Z"/>' +
+      C(200, 232, 110) + C(155, 180, 18) + C(250, 196, 12) + C(205, 300, 13) +
+      P('M50 232 A150 40 0 0 0 350 232 L320 232 A120 25 0 0 1 80 232Z') +
+      G('a-jump',
+        L('M178 118 L162 104 M222 118 L238 104 M190 68 L181 50 M210 68 L219 50') +
+        E(200, 118, 24, 20) + C(200, 88, 22) + C(180, 47, 7) + C(220, 47, 7) +
+        C(200, 85, 10) + K(200, 87, 5) + W(202, 84, 2) + L('M191 100 Q200 106 209 100'), 200, 138)
+    },
+    { id: 'fish', t: 'sea', svg:
+      BG + ground(340, 325, 342) +
+      G('a-sway', P('M40 345 Q20 300 45 260 Q65 220 45 180 Q72 210 66 260 Q50 300 62 345Z'), 52, 345) +
+      G('a-sway2', P('M350 345 Q330 300 352 270 Q370 240 355 210 Q386 240 376 275 Q362 305 372 345Z'), 360, 345) +
+      G('a-rise', C(62, 90, 12) + C(88, 56, 8), 75, 70) + G('a-rise', C(330, 80, 10) + C(312, 50, 6), 320, 65, 'animation-delay:-.6s') +
+      G('a-swim',
+        G('a-wag', P('M285 190 L362 125 Q345 190 362 255Z'), 288, 190) +
+        P('M140 130 Q195 55 255 130Z') + P('M165 255 Q195 305 228 258Z') +
+        E(190, 190, 110, 75) +
+        P('M150 122 Q130 190 150 258 L175 262 Q155 190 175 118Z') +
+        P('M220 120 Q200 190 220 260 L243 255 Q223 190 243 125Z') +
+        P('M178 195 Q212 205 206 238 Q184 228 178 195Z') +
+        C(122, 172, 17) + K(125, 174, 8) + W(128, 170, 3) + L('M86 205 Q97 214 108 206'), 190, 190)
+    },
+    { id: 'octopus', t: 'sea', svg:
+      BG + ground(342, 328, 344) +
+      P('M30 378 Q55 330 80 378Z') + L('M55 376 V346 M42 376 L48 352 M68 376 L62 352') + G('a-spin', S(345, 362, 26, 12), 345, 362) +
+      G('a-rise', C(322, 90, 15) + C(346, 52, 10) + C(298, 52, 7), 322, 70) + G('a-rise', C(70, 70, 10), 70, 70, 'animation-delay:-.5s') +
+      G('a-bob2',
+        G('a-wig', P('M135 215 Q110 270 70 285 Q55 300 80 305 Q135 295 160 225Z'), 148, 220) +
+        G('a-wig', P('M265 215 Q290 270 330 285 Q345 300 320 305 Q265 295 240 225Z'), 252, 220, 'animation-delay:-.25s') +
+        G('a-wig', P('M165 222 Q150 290 130 330 Q125 350 145 345 Q180 300 190 225Z'), 178, 224, 'animation-delay:-.15s') +
+        G('a-wig', P('M235 222 Q250 290 270 330 Q275 350 255 345 Q220 300 210 225Z'), 222, 224, 'animation-delay:-.4s') +
+        G('a-wig', P('M188 225 Q195 300 200 352 Q205 300 212 225Z'), 200, 225, 'animation-delay:-.3s') +
+        P('M115 225 C100 60 300 60 285 225Z') +
+        C(200, 132, 12) + C(160, 142, 8) + C(240, 142, 8) +
+        G('a-blink', E(170, 178, 18, 22) + E(230, 178, 18, 22) + K(172, 182, 9) + K(232, 182, 9) + W(176, 177, 3) + W(236, 177, 3), 200, 178) +
+        C(146, 208, 10) + C(254, 208, 10) + L('M184 207 Q200 220 216 207'), 200, 220)
+    },
+    // ===== princess & magic =====
+    { id: 'unicorn', svg:
+      BG + TW(60, 70, 20, undefined, 0) + TW(330, 60, 16, undefined, 1) + TW(70, 330, 16, undefined, 2) + TW(356, 172, 13, undefined, 3) +
+      G('a-beat', P(H(80, 135, 16)), 80, 135) + G('a-beat', P(H(60, 250, 16)), 60, 250, 'animation-delay:-.3s') +
+      G('a-nod',
+        G('a-wig', P('M222 104 Q285 72 305 128 Q296 148 280 156Z'), 280, 150) +
+        G('a-wig', P('M281 152 Q326 160 324 205 Q320 226 293 228Z'), 290, 190, 'animation-delay:-.15s') +
+        G('a-wig', P('M294 226 Q338 245 328 292 Q318 318 299 320Z'), 296, 270, 'animation-delay:-.3s') +
+        G('a-wig', P('M299 318 Q335 335 325 380 Q315 396 300 396Z'), 300, 350, 'animation-delay:-.45s') +
+        P('M212 112 L228 58 L246 122Z') +
+        G('a-pulse', P('M168 140 L138 48 L196 124Z'), 165, 110) + L('M150 86 L165 80 M157 110 L181 102') +
+        P('M180 396 Q190 300 170 262 Q120 272 95 252 Q75 236 90 210 Q110 172 150 152 Q170 112 215 106 Q265 106 280 160 Q300 230 300 396Z') +
+        P('M178 122 Q150 110 158 150 Q172 138 196 132Z') +
+        G('a-blink', E(165, 190, 11, 14) + K(167, 193, 6) + W(169, 189, 2), 165, 190) +
+        C(140, 226, 11) + K(100, 228, 4) + L('M98 244 Q112 252 128 246'), 240, 396)
+    },
+    { id: 'wand', svg:
+      BG + G('a-beat', P(H(80, 90, 22)), 80, 90) + G('a-beat', P(H(160, 60, 14)), 160, 60, 'animation-delay:-.2s') +
+      G('a-beat', P(H(345, 300, 20)), 345, 300, 'animation-delay:-.4s') + G('a-beat', P(H(60, 220, 14)), 60, 220, 'animation-delay:-.1s') +
+      TW(205, 80, 14, undefined, 0) + TW(350, 60, 16, undefined, 1) + TW(250, 335, 14, undefined, 2) +
+      G('a-wave',
+        P('M90 330 L250 170 L270 190 L110 350Z') +
+        P('M130 290 L145 275 L165 295 L150 310Z') + P('M190 230 L205 215 L225 235 L210 250Z') + C(100, 340, 16) +
+        G('a-pulse', S(285, 150, 70, 30) + C(262, 156, 7) + C(308, 156, 7) + K(272, 142, 5) + K(298, 142, 5) + L('M274 156 Q285 166 296 156'), 285, 150), 100, 340) +
+      L('M120 160 v18 M111 169 h18 M330 220 v16 M322 228 h16')
+    },
+    // ===== animals =====
+    { id: 'dog', svg:
+      BG + E(200, 365, 165, 24) +
+      G('a-tail', P('M278 300 Q340 280 346 228 Q350 212 334 218 Q330 258 283 272Z'), 282, 288) +
+      E(200, 300, 85, 68) + E(200, 318, 40, 38) + E(165, 360, 26, 14) + E(235, 360, 26, 14) +
+      P('M140 240 Q200 268 260 240 L258 256 Q200 286 142 256Z') + C(200, 282, 11) +
+      G('a-head',
+        E(200, 160, 78, 70) + E(236, 148, 24, 22) +
+        G('a-blink', C(168, 150, 11) + C(232, 150, 11) + K(170, 152, 6) + K(234, 152, 6) + W(172, 149, 2) + W(236, 149, 2), 200, 150) +
+        E(200, 198, 42, 30) + G('a-pant', P('M190 214 Q191 240 200 240 Q209 240 210 214Z'), 200, 214) +
+        E(200, 184, 15, 10) + W(195, 181, 3) +
+        L('M200 194 V210 M200 210 Q188 222 176 210 M200 210 Q212 222 224 210') +
+        G('a-ear', P('M138 112 Q92 112 94 192 Q97 228 127 214 Q142 165 152 128Z'), 145, 118) +
+        G('a-ear2', P('M262 112 Q308 112 306 192 Q303 228 273 214 Q258 165 248 128Z'), 255, 118), 200, 240)
+    },
+    { id: 'bunny', svg:
+      BG + ground(345, 330, 347) + flower(55, 300, 352) +
+      G('a-sway', P('M305 272 Q292 236 314 246 Q320 224 330 248 Q352 238 337 272Z') + P('M295 270 L347 270 L321 365Z') + L('M306 296 h18 M313 320 h12'), 321, 365) +
+      G('a-hop',
+        C(276, 322, 18) + E(200, 295, 80, 68) + E(200, 305, 42, 42) + E(160, 358, 30, 15) + E(240, 358, 30, 15) +
+        G('a-wig', P('M168 150 Q138 40 163 28 Q193 28 190 140Z') + P('M170 132 Q152 60 166 48 Q182 50 182 132Z'), 180, 145) +
+        G('a-wig', P('M212 140 Q208 28 238 30 Q264 44 232 152Z') + P('M218 132 Q220 52 234 52 Q248 62 228 136Z'), 220, 145, 'animation-delay:-.2s') +
+        C(200, 190, 62) +
+        G('a-blink', K(178, 182, 8) + K(222, 182, 8) + W(181, 179, 3) + W(225, 179, 3), 200, 182) +
+        C(160, 208, 11) + C(240, 208, 11) + P('M192 204 H208 L200 213Z') +
+        L('M200 213 V220 M200 220 Q192 229 185 222 M200 220 Q208 229 215 222') +
+        L('M128 200 L158 204 M128 214 L158 212 M272 200 L242 204 M272 214 L242 212'), 200, 372)
+    },
+    // ===== space =====
+    { id: 'ufo', svg:
+      BG + TW(50, 50, 16, undefined, 0) + TW(300, 110, 12, undefined, 1) + TW(360, 150, 12, undefined, 2) + TW(40, 170, 12, undefined, 3) +
+      C(345, 60, 26) + C(338, 52, 6) +
+      G('a-beam', P('M168 228 L110 360 H290 L232 228Z'), 200, 300) + TW(200, 318, 16, undefined, 4) +
+      ground(350, 338, 352) +
+      G('a-ufo',
+        P('M128 212 Q200 258 272 212Z') + P('M148 186 Q148 112 200 112 Q252 112 252 186Z') +
+        L('M190 132 L184 120 M210 132 L216 120') + C(200, 152, 22) + K(192, 150, 4) + K(208, 150, 4) + L('M193 160 Q200 165 207 160') +
+        E(200, 200, 110, 30) +
+        [130, 165, 200, 235, 270].map((x, i) => G('a-light', C(x, x === 200 ? 210 : (x === 165 || x === 235 ? 207 : 198), 8), x, 205, `animation-delay:${-i * .12}s`)).join(''), 200, 200)
+    },
+    { id: 'moon', svg:
+      BG + TW(60, 60, 16, undefined, 0) + TW(40, 150, 12, undefined, 1) + TW(340, 230, 14, undefined, 2) + TW(355, 330, 14, undefined, 3) + TW(330, 40, 10, undefined, 4) +
+      G('a-rock',
+        P('M250 70 A135 135 0 1 0 260 330 A150 150 0 0 1 250 70Z') + C(122, 205, 11) +
+        L('M150 175 Q163 186 176 175 M152 182 L148 190 M163 186 L163 194') + L('M150 228 Q162 238 174 226'), 200, 200) +
+      G('a-rise', L('M285 140 h18 l-18 18 h18 M312 104 h14 l-14 14 h14 M334 74 h10 l-10 10 h10'), 300, 110) +
+      G('a-drift', P(cloud(30, 372, 2.2)), 85, 330) + G('a-drift2', P(cloud(190, 388, 2.4)), 250, 340)
+    },
+    // ===== sea =====
+    { id: 'whale', svg:
+      BG + G('a-pulse', C(60, 60, 26), 60, 60) + G('a-drift', P(cloud(250, 92, 1.6)), 290, 70) +
+      G('a-bob3',
+        G('a-spout', P('M150 150 Q145 112 125 97 Q140 93 152 106 Q158 82 168 72 Q170 96 162 110 Q175 96 192 98 Q172 112 164 150Z'), 157, 150) +
+        G('a-wag', P('M290 225 Q330 205 345 165 Q372 172 362 205 Q388 218 372 240 Q340 248 290 245Z'), 295, 235) +
+        E(185, 225, 120, 72) + K(120, 210, 7) + W(122, 207, 2.5) + C(100, 234, 10) + L('M72 238 Q100 258 135 246'), 185, 240) +
+      ground(262, 248, 262) + L('M60 300 q15 -10 30 0 M250 318 q15 -10 30 0 M150 350 q15 -10 30 0 M320 360 q12 -8 24 0')
+    },
+    { id: 'crab', svg:
+      BG + G('a-rise', C(330, 90, 12) + C(355, 58, 8), 340, 75) + ground(300, 285, 302) +
+      P('M30 360 Q55 320 80 360Z') + L('M55 358 V330 M42 358 L47 336 M68 358 L63 336') + G('a-spin', S(345, 345, 20, 9), 345, 345) +
+      G('a-side',
+        P('M135 250 L85 230 L78 244 L132 265Z') + P('M130 275 L78 272 L78 287 L130 290Z') + P('M137 298 L92 318 L100 330 L145 310Z') +
+        P('M140 238 L112 180 L126 174 L154 232Z') +
+        G('a-snap', P('M118 182 Q70 175 72 125 Q92 142 108 138 Q100 112 122 102 Q148 140 118 182Z'), 118, 180) +
+        '<g transform="matrix(-1 0 0 1 400 0)">' +
+        P('M135 250 L85 230 L78 244 L132 265Z') + P('M130 275 L78 272 L78 287 L130 290Z') + P('M137 298 L92 318 L100 330 L145 310Z') +
+        P('M140 238 L112 180 L126 174 L154 232Z') +
+        G('a-snap', P('M118 182 Q70 175 72 125 Q92 142 108 138 Q100 112 122 102 Q148 140 118 182Z'), 118, 180, 'animation-delay:-.12s') + '</g>' +
+        E(200, 270, 75, 50) + C(170, 250, 6) + C(230, 250, 6) +
+        G('a-wig', L('M178 222 V190 M222 222 V190') + C(178, 182, 13) + C(222, 182, 13) + K(180, 184, 6) + K(224, 184, 6) + W(182, 181, 2) + W(226, 181, 2), 200, 222) +
+        C(158, 278, 10) + C(242, 278, 10) + L('M182 284 Q200 298 218 284'), 200, 270)
+    },
+    // ===== sweets =====
+    { id: 'cupcake', svg:
+      BG + TW(55, 70, 18, undefined, 0) + TW(345, 80, 16, undefined, 1) + TW(345, 300, 14, undefined, 2) + TW(55, 300, 14, undefined, 3) +
+      E(200, 362, 130, 18) +
+      G('a-squash',
+        [0, 1, 2, 3, 4].map(i => P(`M${110 + 36 * i} 232 L${146 + 36 * i} 232 L${161 + 26 * i} 360 L${135 + 26 * i} 360Z`)).join('') +
+        P('M95 235 Q80 200 120 190 Q110 150 160 145 Q170 105 200 100 Q230 105 240 145 Q290 150 280 190 Q320 200 305 235Z') +
+        [[125, 215], [145, 172], [178, 140], [222, 140], [255, 172], [278, 212], [200, 120]].map(([x, y]) => C(x, y, 6)).join('') +
+        C(155, 212, 8) + C(245, 212, 8) + K(172, 198, 6) + K(228, 198, 6) + W(174, 195, 2) + W(230, 195, 2) + L('M186 214 Q200 226 214 214') +
+        G('a-bounce', C(200, 82, 20) + L('M200 62 Q206 44 222 36') + W(193, 76, 4), 200, 100), 200, 362)
+    },
+    { id: 'icecream', svg:
+      BG + TW(70, 80, 18, undefined, 0) + TW(330, 80, 16, undefined, 1) +
+      G('a-beat', P(H(70, 300, 18)), 70, 300) + G('a-beat', P(H(330, 300, 18)), 330, 300, 'animation-delay:-.3s') +
+      G('a-jelly',
+        P('M150 230 L200 375 L250 230Z') +
+        L('M165 273 L247 237 M180 317 L235 273 M192 353 L220 317 M235 273 L152 237 M220 317 L165 273 M207 353 L180 317') +
+        P('M150 172 Q140 100 200 92 Q260 100 250 172 Q225 182 200 174 Q175 182 150 172Z') +
+        C(178, 128, 6) + C(215, 118, 6) + C(228, 148, 6) + C(172, 152, 6) +
+        P('M140 235 Q130 175 200 165 Q270 175 260 235 Q250 250 240 238 Q230 255 215 240 Q200 258 185 240 Q170 255 160 238 Q150 250 140 235Z') +
+        C(165, 212, 7) + C(235, 212, 7) + K(180, 200, 5) + K(220, 200, 5) + W(182, 198, 2) + W(222, 198, 2) + L('M190 214 Q200 222 210 214') +
+        G('a-drip', P('M226 238 Q234 262 227 270 Q219 262 222 238Z'), 226, 238) +
+        G('a-bounce', C(200, 78, 16) + L('M200 62 Q204 48 218 42') + W(194, 73, 3.5), 200, 90), 200, 375)
+    },
+    { id: 'lollipop', svg:
+      BG + TW(60, 60, 18, undefined, 0) + TW(345, 70, 16, undefined, 1) + TW(70, 320, 14, undefined, 2) + TW(335, 330, 16, undefined, 3) +
+      G('a-beat', P(H(60, 180, 14)), 60, 180) + G('a-beat', P(H(345, 200, 14)), 345, 200, 'animation-delay:-.3s') +
+      G('a-bob',
+        B(190, 230, 20, 150, 6) + G('a-spin', swirl(200, 150, 95, 8), 200, 150) +
+        G('a-wig', P('M200 262 L162 244 L162 282Z') + P('M200 262 L238 244 L238 282Z') + C(200, 262, 10), 200, 262), 200, 300)
+    },
+    { id: 'donut', svg:
+      BG + TW(55, 60, 16, undefined, 0) + TW(345, 60, 16, undefined, 1) + E(200, 345, 150, 26) +
+      G('a-roll',
+        '<path class="r" fill-rule="evenodd" d="M80 210 a120 120 0 1 0 240 0 a120 120 0 1 0 -240 0Z M160 210 a40 40 0 1 0 80 0 a40 40 0 1 0 -80 0Z"/>' +
+        `<path class="r" fill-rule="evenodd" d="${wavy(200, 210, 98, 7, 9)} M152 210 a48 48 0 1 0 96 0 a48 48 0 1 0 -96 0Z"/>` +
+        [0, 35, 145, 180, 270].map(a => C(f(200 + 75 * Math.cos(a * Math.PI / 180)), f(210 + 75 * Math.sin(a * Math.PI / 180)), 7)).join('') +
+        C(150, 175, 9) + C(250, 175, 9) + K(172, 150, 7) + K(228, 150, 7) + W(174, 147, 2.5) + W(230, 147, 2.5) + L('M178 270 Q200 286 222 270'), 200, 210)
+    },
+    // ===== garden =====
+    { id: 'flowerpot', svg:
+      BG + G('a-pulse', C(340, 60, 28) + L(rays(340, 60, 36, 50, 10)), 340, 60) + ground(330, 318, 332) +
+      G('a-sway',
+        P('M196 270 Q190 200 200 140 L206 140 Q198 200 204 270Z') +
+        P('M198 230 Q150 200 135 220 Q160 245 198 240Z') + P('M202 205 Q250 175 268 195 Q240 222 202 215Z') +
+        G('a-spin4', [0, 45, 90, 135, 180, 225, 270, 315].map(a => C(f(200 + 40 * Math.cos(a * Math.PI / 180)), f(120 + 40 * Math.sin(a * Math.PI / 180)), 22)).join(''), 200, 120) +
+        C(200, 120, 30) + K(189, 114, 5) + K(211, 114, 5) + L('M188 128 Q200 138 212 128'), 200, 272) +
+      P('M140 290 L160 375 H240 L260 290Z') + B(128, 270, 144, 26, 6) +
+      G('a-buzz', E(296, 150, 10, 14) + E(312, 150, 10, 14) + E(304, 170, 22, 15) + L('M298 157 V183 M310 157 V183') + K(320, 166, 3), 304, 170)
+    },
+    { id: 'tree', svg:
+      BG + G('a-drift', P(cloud(30, 92, 1.8)), 75, 70) + ground(330, 315, 332) +
+      G('a-sway', flower(60, 300, 345), 60, 345) + G('a-sway2', flower(345, 305, 345), 345, 345) +
+      P('M178 365 Q188 300 185 215 H215 Q212 300 224 365Z') + K(200, 290, 7) +
+      G('a-sway3',
+        P(bumps(200, 155, 100, 9)) +
+        [[150, 135], [245, 115], [200, 190], [255, 180], [145, 195]].map(([x, y]) => C(x, y, 14) + L(`M${x} ${y - 14} v-8`)).join(''), 200, 365) +
+      G('a-fall', C(200, 110, 14) + L('M200 96 v-8'), 200, 110)
+    },
+    { id: 'snail', svg:
+      BG + G('a-pulse', C(345, 65, 26), 345, 65) + G('a-drift', P(cloud(30, 100, 1.6)), 70, 80) + ground(318, 305, 320) +
+      G('a-sway', flower(60, 250, 330), 60, 330) +
+      G('a-crawl',
+        P('M70 318 Q75 295 120 295 H290 Q300 250 330 235 Q365 225 368 262 Q368 300 330 318Z') +
+        G('a-wig', L('M330 240 L318 196 M350 236 L360 193') + C(317, 190, 8) + C(361, 187, 8), 340, 238) +
+        K(345, 255, 5) + W(347, 253, 2) + C(328, 272, 8) + L('M335 280 Q348 288 358 278') +
+        C(195, 225, 85) + C(200, 228, 58) + C(205, 232, 34) + C(208, 235, 14), 200, 300)
+    },
+    { id: 'rainbow', svg:
+      BG + G('a-pulse', C(60, 60, 26) + L(rays(60, 60, 34, 46, 8)), 60, 60) +
+      L('M290 60 q10 -10 20 0 q10 -10 20 0 M330 95 q8 -8 16 0 q8 -8 16 0') +
+      G('a-glow', [170, 146, 122, 98, 74].map(r => P(band(r - 24, r))).join(''), 200, 280) +
+      G('a-rain', P(drop(40, 335)) + P(drop(120, 335)) + P(drop(300, 335)), 200, 345) +
+      G('a-rain', P(drop(80, 350)) + P(drop(260, 350)) + P(drop(345, 350)), 200, 360, 'animation-delay:-.4s') +
+      G('a-bob2', P(cloud(10, 322, 2.8)) + K(65, 275, 5) + K(95, 275, 5) + L('M70 292 Q80 300 90 292'), 80, 280) +
+      G('a-bob2', P(cloud(250, 322, 2.8)) + K(305, 275, 5) + K(335, 275, 5) + L('M310 292 Q320 300 330 292'), 320, 280, 'animation-delay:-.45s')
+    }
+  ];
+
+  // ---------- per-drawing celebration sounds (synthesized, no files) ----------
+  const N = (f, at, d = .3, type = 'sine', v = .12) => voice(type, [[0, f], [d, f]], v, at);
+  const blub = at => voice('sine', [[0, 180], [.09, 720]], .14, at);
+  const SOUNDS = {
+    castle: () => {
+      [392, 523, 659, 784].forEach((f, i) => voice('square', [[0, f], [i === 3 ? .7 : .15, f]], .07, i * .16, { lp: 2200 }));
+      [1047, 1319, 1568, 2093].forEach((f, i) => N(f, 1.1 + i * .12, .6, 'sine', .07));
+    },
+    crown: () => {
+      const run = [1047, 1175, 1319, 1568, 1760, 2093, 2349, 2637];
+      run.forEach((f, i) => N(f, i * .07, .4, 'sine', .07));
+      run.slice().reverse().forEach((f, i) => N(f, 1.1 + i * .07, .4, 'sine', .05));
+    },
+    cat: () => {
+      voice('sawtooth', [[0, 420], [.12, 820], [.45, 520]], .12, 0, { lp: 1600, vib: [6, 15] });
+      voice('sawtooth', [[0, 520], [.1, 960], [.4, 620]], .12, .7, { lp: 1700, vib: [6, 15] });
+      voice('sawtooth', [[0, 34], [1.4, 30]], .14, 1.4, { lp: 280, vib: [22, 6] });
+    },
+    butterfly: () => {
+      for (let i = 0; i < 12; i++) { const f = 600 + i * 70 + Math.random() * 80; voice('sine', [[0, f], [.12, f * 1.5]], .06, i * .12); }
+    },
+    rocket: () => {
+      N(880, 0, .15, 'square', .05); N(880, .4, .15, 'square', .05); N(880, .8, .15, 'square', .05); N(1760, 1.2, .35, 'square', .05);
+      noise(1.2, 2.2, 300, 3200, .3);
+      voice('sawtooth', [[0, 70], [2, 38]], .12, 1.2, { lp: 400 });
+    },
+    planet: () => {
+      voice('sine', [[0, 300], [.4, 900], [.9, 350]], .13, 0, { vib: [8, 40] });
+      [988, 659, 1319, 784, 1568].forEach((f, i) => N(f, 1.0 + i * .13, .1, 'square', .05));
+    },
+    fish: () => { [0, .25, .4, .8, 1.0, 1.4, 1.7, 2.1].forEach(blub); },
+    octopus: () => {
+      voice('sine', [[0, 140], [.25, 560], [.7, 200]], .16, 0, { vib: [12, 60] });
+      voice('triangle', [[0, 200], [.25, 720], [.8, 250]], .08, .9, { vib: [12, 80] });
+      [1.9, 2.1, 2.4].forEach(blub);
+    },
+    unicorn: () => {
+      [523, 587, 659, 784, 880, 1047, 1175, 1319, 1568, 1760].forEach((f, i) => N(f, i * .06, .4, 'sine', .06));
+      voice('sawtooth', [[0, 600], [.15, 1100], [.8, 450]], .07, 1.0, { lp: 2500, vib: [16, 90] });
+    },
+    wand: () => {
+      voice('sine', [[0, 400], [.5, 2400]], .1);
+      for (let i = 0; i < 10; i++) N(1500 + Math.random() * 1500, .5 + i * .09, .2, 'sine', .05);
+    },
+    dog: () => {
+      [0, .35, 1.6].forEach(t => { voice('sawtooth', [[0, 260], [.04, 480], [.16, 220]], .16, t, { lp: 1100 }); noise(t, .12, 1500, 600, .1); });
+      [.8, 1.0, 1.2, 1.4].forEach(t => noise(t, .1, 2500, 2000, .05));
+    },
+    bunny: () => {
+      [0, .7, 1.4, 2.1].forEach(t => voice('sine', [[0, 220], [.12, 660], [.25, 330]], .12, t, { vib: [20, 30] }));
+      [2.7, 2.85, 3.0].forEach(t => noise(t, .07, 3000, 1500, .1));
+    },
+    ufo: () => {
+      voice('sine', [[0, 500], [.8, 900], [1.6, 450], [2.4, 800]], .1, 0, { vib: [7, 50] });
+      [1200, 900, 1500].forEach((f, i) => N(f, 2.5 + i * .15, .1, 'square', .05));
+    },
+    moon: () => {
+      [659, 784, 880, 784, 659, 587, 523].forEach((f, i) => N(f, i * .42, .5, 'triangle', .09));
+      [262, 196].forEach((f, i) => N(f, i * 1.5, 1.4, 'sine', .06));
+    },
+    whale: () => {
+      voice('sine', [[0, 260], [.6, 420], [1.4, 230]], .15, 0, { vib: [5, 12] });
+      noise(1.0, .8, 600, 2500, .15);
+      voice('sine', [[0, 330], [.5, 500], [1.1, 300]], .1, 1.6, { vib: [5, 12] });
+    },
+    crab: () => {
+      [0, .15, .6, .75, 1.2, 1.35].forEach(t => voice('square', [[0, 2200], [.03, 1400]], .06, t));
+      [784, 659, 784, 880, 784].forEach((f, i) => N(f, 1.7 + i * .15, .15, 'triangle', .1));
+    },
+    cupcake: () => {
+      [523, 659, 784, 1047, 784, 1047].forEach((f, i) => N(f, i * .12, .2, 'triangle', .1));
+      voice('sine', [[0, 300], [.06, 1200]], .12, 1.0);
+    },
+    icecream: () => {
+      noise(0, .3, 800, 3500, .12); noise(.45, .3, 800, 3500, .12);
+      voice('sine', [[0, 280], [.6, 320]], .12, 1.0, { vib: [5, 10] });
+      [659, 784, 1047].forEach((f, i) => N(f, 1.8 + i * .12, .2, 'triangle', .09));
+    },
+    lollipop: () => {
+      voice('sine', [[0, 300], [1.5, 1400]], .08, 0, { vib: [14, 40] });
+      [1568, 2093, 2637, 2093, 2637].forEach((f, i) => N(f, 1.6 + i * .1, .25, 'sine', .05));
+    },
+    donut: () => {
+      [0, .6, 1.2].forEach(t => voice('sine', [[0, 180], [.12, 500], [.25, 260]], .12, t, { vib: [18, 25] }));
+      [1.8, 2.05, 2.3].forEach(t => voice('square', [[0, 200], [.08, 140]], .07, t, { lp: 600 }));
+    },
+    flowerpot: () => {
+      voice('sawtooth', [[0, 190], [1.6, 210]], .06, 0, { lp: 900, vib: [9, 25] });
+      [1.8, 1.95, 2.3, 2.45].forEach(t => voice('sine', [[0, 2200], [.08, 3200]], .06, t));
+    },
+    tree: () => {
+      noise(0, 1.4, 400, 1200, .1);
+      voice('sine', [[0, 500], [.15, 150]], .15, 1.5);
+      [2.0, 2.15, 2.5, 2.65].forEach(t => voice('sine', [[0, 2400], [.08, 3300]], .06, t));
+    },
+    snail: () => {
+      voice('sine', [[0, 200], [.6, 300]], .08, 0); voice('sine', [[0, 250], [.6, 350]], .08, .8);
+      [523, 587, 659, 784].forEach((f, i) => N(f, 1.6 + i * .2, .25, 'triangle', .09));
+    },
+    rainbow: () => {
+      for (let i = 0; i < 14; i++) voice('sine', [[0, 1800 + Math.random() * 1200], [.05, 1200]], .04, i * .07 + Math.random() * .05);
+      [523, 587, 659, 698, 784, 880, 988, 1047].forEach((f, i) => N(f, 1.2 + i * .1, .35, 'sine', .06));
+    }
+  };
+
+  const CATS = [
+    { id: 'castle', pages: ['castle', 'crown', 'unicorn', 'wand'] },
+    { id: 'animal', pages: ['cat', 'butterfly', 'dog', 'bunny'] },
+    { id: 'space', pages: ['rocket', 'planet', 'ufo', 'moon'] },
+    { id: 'sea', pages: ['fish', 'octopus', 'whale', 'crab'] },
+    { id: 'sweets', pages: ['cupcake', 'icecream', 'lollipop', 'donut'] },
+    { id: 'garden', pages: ['flowerpot', 'tree', 'snail', 'rainbow'] }
+  ];
+  const byId = Object.fromEntries(PAGES.map(p => [p.id, p]));
+
+  const COLORS = ['#ff4d4d', '#ff9f1c', '#ffd93d', '#8ae234', '#2fbf71', '#2ec4b6', '#4cc9f0', '#3a6ff7',
+    '#8b5cf6', '#c77dff', '#ff6fb5', '#ffc2e2', '#a0673a', '#ffcfa3', '#9aa3b5', '#4a4060',
+    'url(#rainbow)', 'url(#dots)', 'url(#gold)', 'magic', '#ffffff'];
+  const PLAIN = COLORS.slice(0, 15);
+  const NOTES = [262, 294, 330, 392, 440, 523, 587, 659, 784, 880];
+
+  // ---------- state ----------
+  const KEY = 'kc-v1';
+  let st = { fills: {}, done: {}, sound: true };
+  try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) st = Object.assign(st, s); } catch (e) {}
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
+
+  let page = null, color = COLORS[10], undo = [], regions = [];
+  const $ = id => document.getElementById(id);
+
+  const buildSvg = p => {
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">${p.svg}</svg>`;
+    const svg = wrap.firstChild;
+    const fills = st.fills[p.id] || [];
+    svg.querySelectorAll('.r').forEach((el, i) => { el.dataset.i = i; if (fills[i]) el.style.fill = fills[i]; });
+    return svg;
+  };
+
+  // ---------- sound ----------
+  let ac = null;
+  const audio = () => {
+    if (!st.sound) return null;
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      if (ac.state === 'suspended') ac.resume();
+      return ac;
+    } catch (e) { return null; }
+  };
+  const tone = (freq, at = 0, dur = .18, type = 'triangle', vol = .18) => {
+    const a = audio(); if (!a) return;
+    try {
+      const t = a.currentTime + at, o = a.createOscillator(), g = a.createGain();
+      o.type = type; o.frequency.setValueAtTime(freq, t);
+      o.frequency.exponentialRampToValueAtTime(freq * 1.5, t + dur * .6);
+      g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur);
+      o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur);
+    } catch (e) {}
+  };
+  // pitch glide through [time, freq] points, optional vibrato [rate, depth] and lowpass
+  const voice = (type, pts, vol = .15, at = 0, opt = {}) => {
+    const a = audio(); if (!a) return;
+    try {
+      const t0 = a.currentTime + at, end = pts[pts.length - 1][0];
+      const o = a.createOscillator(), g = a.createGain();
+      o.type = type; o.frequency.setValueAtTime(pts[0][1], t0);
+      pts.slice(1).forEach(([t, f]) => o.frequency.linearRampToValueAtTime(f, t0 + t));
+      g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + .02);
+      g.gain.setValueAtTime(vol, t0 + Math.max(.03, end * .7)); g.gain.exponentialRampToValueAtTime(.0001, t0 + end);
+      if (opt.vib) {
+        const l = a.createOscillator(), lg = a.createGain();
+        l.frequency.value = opt.vib[0]; lg.gain.value = opt.vib[1];
+        l.connect(lg).connect(o.frequency); l.start(t0); l.stop(t0 + end);
+      }
+      let node = o;
+      if (opt.lp) { const fl = a.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = opt.lp; node = o.connect(fl); }
+      node.connect(g).connect(a.destination); o.start(t0); o.stop(t0 + end + .05);
+    } catch (e) {}
+  };
+  const noise = (at, dur, f1, f2, vol) => {
+    const a = audio(); if (!a) return;
+    try {
+      const len = Math.floor(a.sampleRate * dur), buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      const t0 = a.currentTime + at, s = a.createBufferSource(), fl = a.createBiquadFilter(), g = a.createGain();
+      s.buffer = buf; fl.type = 'lowpass';
+      fl.frequency.setValueAtTime(f1, t0); fl.frequency.exponentialRampToValueAtTime(f2, t0 + dur * .6);
+      g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + .3); g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+      s.connect(fl).connect(g).connect(a.destination); s.start(t0); s.stop(t0 + dur);
+    } catch (e) {}
+  };
+
+  // ---------- effects ----------
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const sparks = (x, y, c) => {
+    if (reduce) return;
+    const fill = c.startsWith('#') ? c : '#ffd93d';
+    for (let i = 0; i < 6; i++) {
+      const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      s.setAttribute('viewBox', '0 0 20 20'); s.setAttribute('class', 'spark');
+      s.innerHTML = `<path d="${starD(10, 10, 9)}" fill="${fill === '#ffffff' ? '#ffd93d' : fill}" stroke="#2b2140" stroke-width="1.5"/>`;
+      const a = Math.random() * Math.PI * 2, d = 40 + Math.random() * 40;
+      s.style.left = x - 11 + 'px'; s.style.top = y - 11 + 'px';
+      s.style.setProperty('--dx', Math.cos(a) * d + 'px'); s.style.setProperty('--dy', Math.sin(a) * d + 'px');
+      document.body.appendChild(s); setTimeout(() => s.remove(), 650);
+    }
+  };
+  const cv = $('confetti'), cx = cv.getContext('2d');
+  let parts = [], raf = 0;
+  const confetti = () => {
+    if (reduce) return;
+    cv.width = innerWidth * devicePixelRatio; cv.height = innerHeight * devicePixelRatio;
+    cx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    for (let i = 0; i < 120; i++) parts.push({
+      x: innerWidth / 2, y: innerHeight * .55, vx: (Math.random() - .5) * 16, vy: -8 - Math.random() * 12,
+      r: 7 + Math.random() * 9, a: Math.random() * 6, va: (Math.random() - .5) * .3,
+      c: PLAIN[i % 12], star: i % 3 === 0, life: 0
+    });
+    if (!raf) raf = requestAnimationFrame(tick);
+  };
+  const tick = () => {
+    cx.clearRect(0, 0, innerWidth, innerHeight);
+    parts.forEach(p => {
+      p.vy += .35; p.x += p.vx; p.y += p.vy; p.a += p.va; p.life++;
+      cx.save(); cx.translate(p.x, p.y); cx.rotate(p.a); cx.fillStyle = p.c;
+      if (p.star) cx.fill(new Path2D(starD(0, 0, p.r))); else cx.fillRect(-p.r / 2, -p.r / 4, p.r, p.r / 2);
+      cx.restore();
+    });
+    parts = parts.filter(p => p.y < innerHeight + 40 && p.life < 240);
+    raf = parts.length ? requestAnimationFrame(tick) : 0;
+    if (!raf) cx.clearRect(0, 0, innerWidth, innerHeight);
+  };
+
+  // ---------- home ----------
+  const badge = `<svg class="badge" viewBox="0 0 50 50"><path d="${starD(25, 26, 23, 11)}" fill="#ffd93d" stroke="#2b2140" stroke-width="3.5" stroke-linejoin="round"/></svg>`;
+  const miniStar = on => `<svg viewBox="0 0 24 24"><path d="${starD(12, 12.5, 11, 5)}" fill="${on ? '#ffd93d' : '#ffffff'}" stroke="#2b2140" stroke-width="2.2" stroke-linejoin="round"/></svg>`;
+  let curCat = null;
+  const show = id => ['home', 'cat', 'paint'].forEach(v => { $(v).hidden = v !== id; });
+  const renderHome = () => {
+    const g = $('gallery'); g.innerHTML = '';
+    CATS.forEach(c => {
+      const b = document.createElement('button');
+      b.className = 'card t-' + c.id; b.setAttribute('aria-label', c.id);
+      b.appendChild(buildSvg(byId[c.pages[0]]));
+      b.insertAdjacentHTML('beforeend', `<span class="stars">${c.pages.map(id => miniStar(st.done[id])).join('')}</span>`);
+      b.onclick = () => { tone(523, 0, .12, 'sine'); openCat(c); };
+      g.appendChild(b);
+    });
+  };
+  const openCat = c => {
+    curCat = c;
+    const icon = $('catIcon'); icon.className = 'cat-icon t-' + c.id; icon.innerHTML = '';
+    icon.appendChild(buildSvg(byId[c.pages[0]]));
+    const g = $('catGallery'); g.innerHTML = '';
+    c.pages.forEach(id => {
+      const p = byId[id], b = document.createElement('button');
+      b.className = 'card t-' + c.id; b.setAttribute('aria-label', p.id);
+      b.appendChild(buildSvg(p));
+      if (st.done[p.id]) b.insertAdjacentHTML('beforeend', badge);
+      b.onclick = () => openPage(p);
+      g.appendChild(b);
+    });
+    show('cat');
+  };
+
+  // ---------- paint ----------
+  const renderPal = () => {
+    const pal = $('pal'); pal.innerHTML = '';
+    COLORS.forEach((c, i) => {
+      const b = document.createElement('button');
+      b.className = 'sw' + (c === color ? ' on' : '');
+      b.setAttribute('aria-label', 'צבע ' + (i + 1));
+      if (c === 'url(#rainbow)') b.style.background = 'conic-gradient(#ff4d4d,#ff9f1c,#ffd93d,#2fbf71,#4cc9f0,#8b5cf6,#ff4d4d)';
+      else if (c === 'url(#dots)') b.style.background = 'radial-gradient(#ff6fb5 30%, transparent 33%) 0 0/16px 16px, #ffc2e2';
+      else if (c === 'url(#gold)') { b.style.background = '#ffcf3d'; b.innerHTML = `<svg viewBox="0 0 20 20"><path d="${starD(10, 10, 9, 3.5, 4)}" fill="#fff6c9"/></svg>`; }
+      else if (c === 'magic') { b.style.background = '#ffffff'; b.innerHTML = `<svg viewBox="0 0 24 24"><path d="M4 20 L14 10" stroke="#2b2140" stroke-width="3" stroke-linecap="round"/><path d="${starD(17, 7, 6.5, 2.8)}" fill="#ffd93d" stroke="#2b2140" stroke-width="1.5" stroke-linejoin="round"/></svg>`; }
+      else if (c === '#ffffff') { b.style.background = '#ffffff'; b.innerHTML = `<svg viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="9" rx="3" transform="rotate(-30 12 12)" fill="#ffc2e2" stroke="#2b2140" stroke-width="2"/></svg>`; }
+      else b.style.background = c;
+      b.onclick = () => { color = c; tone(NOTES[i % NOTES.length], 0, .12, 'sine', .12); renderPal(); };
+      pal.appendChild(b);
+    });
+  };
+
+  const persist = () => {
+    st.fills[page.id] = regions.map(el => el.style.fill || '');
+    save();
+  };
+  const checkDone = () => {
+    const allDone = regions.every(el => el.classList.contains('bg') || (el.style.fill && el.style.fill !== 'rgb(255, 255, 255)' && el.style.fill !== '#ffffff'));
+    if (allDone && !st.done[page.id]) { st.done[page.id] = true; save(); setTimeout(celebrate, 250); }
+  };
+
+  // the drawing comes alive: CSS animations on its groups + its own sound
+  let aliveT = 0;
+  function celebrate() {
+    if (!page) return;
+    confetti();
+    const svg = $('stage').querySelector('svg');
+    svg.classList.remove('alive'); void svg.getBoundingClientRect(); svg.classList.add('alive');
+    clearTimeout(aliveT); aliveT = setTimeout(() => svg.classList.remove('alive'), 6500);
+    (SOUNDS[page.id] || (() => {}))();
+  }
+
+  const openPage = p => {
+    clearTimeout(aliveT);
+    page = p; undo = [];
+    const stage = $('stage'); stage.innerHTML = '';
+    const svg = buildSvg(p); stage.appendChild(svg);
+    regions = [...svg.querySelectorAll('.r')];
+    svg.addEventListener('pointerdown', e => {
+      const el = e.target.closest('.r'); if (!el) return;
+      e.preventDefault();
+      const c = color === 'magic' ? PLAIN[Math.floor(Math.random() * PLAIN.length)] : color;
+      undo.push([[+el.dataset.i, el.style.fill || '']]);
+      el.style.fill = c;
+      el.classList.remove('pop'); void el.getBBox(); el.classList.add('pop');
+      tone(NOTES[Math.floor(Math.random() * NOTES.length)]);
+      sparks(e.clientX, e.clientY, c);
+      persist(); checkDone();
+    });
+    show('paint');
+    renderPal();
+  };
+
+  $('homeBtn').onclick = () => { tone(392, 0, .15, 'sine'); clearTimeout(aliveT); openCat(curCat || CATS.find(c => c.pages.includes(page.id))); };
+  $('catHomeBtn').onclick = () => { tone(392, 0, .15, 'sine'); renderHome(); show('home'); };
+  $('undoBtn').onclick = () => {
+    const last = undo.pop(); if (!last) return;
+    last.forEach(([i, v]) => { regions[i].style.fill = v; });
+    tone(330, 0, .14, 'sine'); persist();
+  };
+  let armT = 0;
+  $('clearBtn').onclick = () => {
+    const b = $('clearBtn');
+    if (!b.classList.contains('armed')) {
+      b.classList.add('armed'); tone(220, 0, .2, 'square', .06);
+      clearTimeout(armT); armT = setTimeout(() => b.classList.remove('armed'), 3000);
+      return;
+    }
+    b.classList.remove('armed'); clearTimeout(armT);
+    undo.push(regions.map((el, i) => [i, el.style.fill || '']));
+    regions.forEach(el => { el.style.fill = ''; });
+    tone(523, 0, .12); tone(392, .1, .12); tone(262, .2, .2);
+    persist();
+  };
+  const paintSound = () => { $('soundBtn').classList.toggle('off', !st.sound); $('waves').style.display = st.sound ? '' : 'none'; };
+  $('soundBtn').onclick = () => { st.sound = !st.sound; save(); paintSound(); tone(523); };
+  $('partyBtn').onclick = celebrate;
+  $('fsBtn').onclick = () => {
+    try {
+      const d = document;
+      if (d.fullscreenElement) d.exitFullscreen().catch(() => {});
+      else (d.documentElement.requestFullscreen?.() || Promise.resolve()).catch(() => {});
+    } catch (e) {}
+  };
+
+  paintSound();
+  renderHome();
+})();
+</script>
