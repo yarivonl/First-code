@@ -1141,7 +1141,7 @@ body.painting { background-image: url(assets/bg_paint_l.webp); background-color:
 
   // ---------- free brush: strokes stay inside the region where they start ----------
   const BRUSH_SIZES = [9, 20, 38];
-  const BRUSH_KINDS = ['pen', 'spray', 'star'];
+  const BRUSH_KINDS = ['pen', 'spray'];
   let sprayT = 0;
   const tool = () => st.tool === 'brush' ? 'brush' : 'fill';
   let stroke = null;
@@ -1161,8 +1161,7 @@ body.painting { background-image: url(assets/bg_paint_l.webp); background-color:
     tctx.clearRect(0, 0, 800, 800);
     const w = BRUSH_SIZES[st.brushSize ?? 1], kind = BRUSH_KINDS.includes(st.brushKind) ? st.brushKind : 'pen';
     stroke = { L, c, w, kind, x, y, dist: 0, hue: Math.random() * 360 };
-    if (kind === 'star') stamp(x, y);
-    else if (kind === 'spray') { spray(x, y); clearInterval(sprayT); sprayT = setInterval(() => { if (stroke) spray(stroke.x, stroke.y); else clearInterval(sprayT); }, 35); }
+    if (kind === 'spray') { spray(x, y); clearInterval(sprayT); sprayT = setInterval(() => { if (stroke) spray(stroke.x, stroke.y); else clearInterval(sprayT); }, 35); }
     else segment(x, y, x + .01, y);
   };
   const strokeFill = () => {
@@ -1177,12 +1176,6 @@ body.painting { background-image: url(assets/bg_paint_l.webp); background-color:
     if (s.kind === 'spray') {
       const n = Math.ceil(d / (s.w * .5));
       for (let k = 1; k <= n; k++) spray(s.x + (x - s.x) * k / n, s.y + (y - s.y) * k / n);
-      s.x = x; s.y = y; return;
-    }
-    if (s.kind === 'star') {
-      s.dist += d;
-      const gap = s.w * 1.9;
-      if (s.dist >= gap) { s.dist = 0; stamp(x, y); }
       s.x = x; s.y = y; return;
     }
     segment(s.x, s.y, x, y); s.x = x; s.y = y;
@@ -1205,14 +1198,6 @@ body.painting { background-image: url(assets/bg_paint_l.webp); background-color:
     s.hue += 6;
     commit(x - rad - 3, y - rad - 3, rad * 2 + 6, rad * 2 + 6);
   };
-  const stamp = (x, y) => {
-    const s = stroke, r = s.w * .75 + 6;
-    tctx.fillStyle = strokeFill();
-    tctx.fill(new Path2D(starD(x, y, r * 1.1, r * .5)));
-    s.hue += 40;
-    commit(x - r * 1.6, y - r * 1.6, r * 3.2, r * 3.2);
-    if (s.kind) tone(NOTES[Math.floor(Math.random() * NOTES.length)] * 2, 0, .08, 'sine', .05);
-  };
   // copy the stroke pixels inside the start region into the fill layer (only the touched box)
   const commit = (bx, by, bw, bh) => {
     const R = art.R, W = R.W;
@@ -1230,8 +1215,7 @@ body.painting { background-image: url(assets/bg_paint_l.webp); background-color:
   };
   const BRUSH_ICONS = {
     pen: '<svg viewBox="0 0 24 24"><path d="M5 19 C9 12 13 15 19 5" stroke="#6b4e8a" stroke-width="3.2" fill="none" stroke-linecap="round"/></svg>',
-    spray: '<svg viewBox="0 0 24 24"><rect x="4" y="9" width="9" height="12" rx="2.5" fill="#6b4e8a"/><rect x="6" y="5.5" width="5" height="4" rx="1" fill="#6b4e8a"/><g fill="#ff6fb5"><circle cx="16.5" cy="5" r="1.2"/><circle cx="19.5" cy="7.5" r="1.2"/><circle cx="16.5" cy="9.5" r="1"/><circle cx="20.5" cy="3.5" r="1"/><circle cx="21" cy="11" r="1"/><circle cx="18.5" cy="12.5" r=".9"/></g></svg>',
-    star: `<svg viewBox="0 0 24 24"><path d="${starD(12, 12.5, 10, 4.6)}" fill="#ffc93a"/></svg>`
+    spray: '<svg viewBox="0 0 24 24"><rect x="4" y="9" width="9" height="12" rx="2.5" fill="#6b4e8a"/><rect x="6" y="5.5" width="5" height="4" rx="1" fill="#6b4e8a"/><g fill="#ff6fb5"><circle cx="16.5" cy="5" r="1.2"/><circle cx="19.5" cy="7.5" r="1.2"/><circle cx="16.5" cy="9.5" r="1"/><circle cx="20.5" cy="3.5" r="1"/><circle cx="21" cy="11" r="1"/><circle cx="18.5" cy="12.5" r=".9"/></g></svg>'
   };
   const renderBrushOpts = pal => {
     const box = document.createElement('div'); box.className = 'brush-opts';
