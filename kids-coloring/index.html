@@ -1134,14 +1134,15 @@ body.painting { background-image: url(assets/bg_paint_l.webp); background-color:
       persistArt(); checkArtDone();
     });
     box.addEventListener('pointermove', e => { if (stroke) { e.preventDefault(); const [x, y] = toXY(e); moveStroke(x, y); } });
-    const end = () => { if (stroke) { stroke = null; persistArt(); } };
+    const end = () => { clearInterval(sprayT); if (stroke) { stroke = null; persistArt(); } };
     box.addEventListener('pointerup', end);
     box.addEventListener('pointercancel', end);
   };
 
   // ---------- free brush: strokes stay inside the region where they start ----------
   const BRUSH_SIZES = [9, 20, 38];
-  const BRUSH_KINDS = ['pen', 'glitter', 'heart', 'star'];
+  const BRUSH_KINDS = ['pen', 'spray', 'star'];
+  let sprayT = 0;
   const tool = () => st.tool === 'brush' ? 'brush' : 'fill';
   let stroke = null;
   const tmp = document.createElement('canvas'); tmp.width = tmp.height = 800;
@@ -1160,7 +1161,9 @@ body.painting { background-image: url(assets/bg_paint_l.webp); background-color:
     tctx.clearRect(0, 0, 800, 800);
     const w = BRUSH_SIZES[st.brushSize ?? 1], kind = BRUSH_KINDS.includes(st.brushKind) ? st.brushKind : 'pen';
     stroke = { L, c, w, kind, x, y, dist: 0, hue: Math.random() * 360 };
-    if (kind === 'heart' || kind === 'star') stamp(x, y); else segment(x, y, x + .01, y);
+    if (kind === 'star') stamp(x, y);
+    else if (kind === 'spray') { spray(x, y); clearInterval(sprayT); sprayT = setInterval(() => { if (stroke) spray(stroke.x, stroke.y); else clearInterval(sprayT); }, 35); }
+    else segment(x, y, x + .01, y);
   };
   const strokeFill = () => {
     const c = stroke.c;
@@ -1171,7 +1174,12 @@ body.painting { background-image: url(assets/bg_paint_l.webp); background-color:
     const s = stroke, d = Math.hypot(x - s.x, y - s.y);
     if (d < 1.5) return;
     s.hue += d * .6;
-    if (s.kind === 'heart' || s.kind === 'star') {
+    if (s.kind === 'spray') {
+      const n = Math.ceil(d / (s.w * .5));
+      for (let k = 1; k <= n; k++) spray(s.x + (x - s.x) * k / n, s.y + (y - s.y) * k / n);
+      s.x = x; s.y = y; return;
+    }
+    if (s.kind === 'star') {
       s.dist += d;
       const gap = s.w * 1.9;
       if (s.dist >= gap) { s.dist = 0; stamp(x, y); }
@@ -1183,21 +1191,24 @@ body.painting { background-image: url(assets/bg_paint_l.webp); background-color:
     const s = stroke;
     tctx.lineCap = tctx.lineJoin = 'round'; tctx.lineWidth = s.w; tctx.strokeStyle = strokeFill();
     tctx.beginPath(); tctx.moveTo(x0, y0); tctx.lineTo(x1, y1); tctx.stroke();
-    let pad = s.w / 2 + 2;
-    if (s.kind === 'glitter') {
-      for (let k = 0; k < 3; k++) {
-        const t = Math.random(), r = rnd(2, 6), gx = x0 + (x1 - x0) * t + rnd(-s.w, s.w) * .6, gy = y0 + (y1 - y0) * t + rnd(-s.w, s.w) * .6;
-        tctx.fillStyle = Math.random() < .5 ? '#ffffff' : '#fff3b0';
-        tctx.fill(new Path2D(starD(gx, gy, r * 1.6, r * .45, 4)));
-      }
-      pad = s.w + 12;
-    }
+    const pad = s.w / 2 + 2;
     commit(Math.min(x0, x1) - pad, Math.min(y0, y1) - pad, Math.abs(x1 - x0) + pad * 2, Math.abs(y1 - y0) + pad * 2);
+  };
+  // airbrush: a soft cloud of small dots, denser in the middle
+  const spray = (x, y) => {
+    const s = stroke, rad = s.w * 1.3 + 6;
+    tctx.fillStyle = strokeFill();
+    for (let k = 0; k < 22; k++) {
+      const a = Math.random() * Math.PI * 2, r = rad * Math.pow(Math.random(), .75), dr = rnd(.8, 2.2);
+      tctx.beginPath(); tctx.arc(x + Math.cos(a) * r, y + Math.sin(a) * r, dr, 0, 7); tctx.fill();
+    }
+    s.hue += 6;
+    commit(x - rad - 3, y - rad - 3, rad * 2 + 6, rad * 2 + 6);
   };
   const stamp = (x, y) => {
     const s = stroke, r = s.w * .75 + 6;
     tctx.fillStyle = strokeFill();
-    tctx.fill(new Path2D(s.kind === 'heart' ? H(x, y - r * .1, r * .8) : starD(x, y, r * 1.1, r * .5)));
+    tctx.fill(new Path2D(starD(x, y, r * 1.1, r * .5)));
     s.hue += 40;
     commit(x - r * 1.6, y - r * 1.6, r * 3.2, r * 3.2);
     if (s.kind) tone(NOTES[Math.floor(Math.random() * NOTES.length)] * 2, 0, .08, 'sine', .05);
@@ -1219,8 +1230,7 @@ body.painting { background-image: url(assets/bg_paint_l.webp); background-color:
   };
   const BRUSH_ICONS = {
     pen: '<svg viewBox="0 0 24 24"><path d="M5 19 C9 12 13 15 19 5" stroke="#6b4e8a" stroke-width="3.2" fill="none" stroke-linecap="round"/></svg>',
-    glitter: `<svg viewBox="0 0 24 24"><path d="M4 20 C8 14 12 15 17 8" stroke="#ff6fb5" stroke-width="3" fill="none" stroke-linecap="round"/><path d="${starD(18, 6, 5, 1.4, 4)}" fill="#ffc93a"/><path d="${starD(8, 9, 3.2, .9, 4)}" fill="#ffc93a"/></svg>`,
-    heart: `<svg viewBox="0 0 24 24"><path d="${H(12, 11, 8)}" fill="#ff6fb5"/></svg>`,
+    spray: '<svg viewBox="0 0 24 24"><rect x="4" y="9" width="9" height="12" rx="2.5" fill="#6b4e8a"/><rect x="6" y="5.5" width="5" height="4" rx="1" fill="#6b4e8a"/><g fill="#ff6fb5"><circle cx="16.5" cy="5" r="1.2"/><circle cx="19.5" cy="7.5" r="1.2"/><circle cx="16.5" cy="9.5" r="1"/><circle cx="20.5" cy="3.5" r="1"/><circle cx="21" cy="11" r="1"/><circle cx="18.5" cy="12.5" r=".9"/></g></svg>',
     star: `<svg viewBox="0 0 24 24"><path d="${starD(12, 12.5, 10, 4.6)}" fill="#ffc93a"/></svg>`
   };
   const renderBrushOpts = pal => {
