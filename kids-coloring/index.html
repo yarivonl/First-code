@@ -15,6 +15,8 @@
   --card-animal: #ffe3b0;
   --card-space: #d3dbff;
   --card-sea: #c4efec;
+  --card-sweets: #ffd5c7;
+  --card-garden: #d4f2c4;
   --white: #ffffff;
   --danger: #ff4d4d;
   color-scheme: light;
@@ -100,6 +102,24 @@ button:focus-visible { outline: 4px solid var(--rose); outline-offset: 3px; }
 .t-animal { background: var(--card-animal); }
 .t-space { background: var(--card-space); }
 .t-sea { background: var(--card-sea); }
+.t-sweets { background: var(--card-sweets); }
+.t-garden { background: var(--card-garden); }
+
+/* category tiles: cover drawing + a progress row of stars */
+.gallery.cats {
+  grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 40px;
+  width: 100%; max-width: max(320px, calc((100vh - 210px) * 1.5 + 44px)); margin-inline: auto; box-sizing: border-box;
+}
+.card .stars {
+  position: absolute; left: 50%; bottom: -20px; transform: translateX(-50%);
+  display: flex; gap: 4px; padding: 5px 10px;
+  background: var(--white); border: 4px solid var(--ink); border-radius: 999px;
+}
+.card .stars svg { width: 24px; height: 24px; }
+.view { height: 100%; display: flex; flex-direction: column; gap: 14px; }
+.view-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.cat-icon { width: 72px; height: 72px; border-radius: 22px; border: 4px solid var(--ink); padding: 4px; box-sizing: border-box; }
+.cat-icon svg { width: 100%; height: 100%; display: block; }
 
 /* paint */
 #paint {
@@ -210,6 +230,70 @@ g[class^="a-"] { transform-box: view-box; }
 @keyframes wig { from { transform: rotate(-11deg); } to { transform: rotate(11deg); } }
 @keyframes bob2 { to { transform: translateY(-18px); } }
 @keyframes spin { to { transform: rotate(360deg); } }
+.alive .a-nod { animation: nod 1.2s ease-in-out infinite alternate; }
+.alive .a-wave { animation: wave .5s ease-in-out infinite alternate; }
+.alive .a-ear { animation: ear .4s ease-in-out infinite alternate; }
+.alive .a-ear2 { animation: ear2 .4s ease-in-out infinite alternate; }
+.alive .a-pant { animation: pant .25s ease-in-out infinite alternate; }
+.alive .a-hop { animation: hop .7s ease-in-out infinite; }
+.alive .a-ufo { animation: ufo 1.2s ease-in-out infinite alternate; }
+.alive .a-light { animation: light .3s ease-in-out infinite alternate; }
+.alive .a-beam { animation: beam .25s ease-in-out infinite alternate; }
+.alive .a-rock { animation: rock 2s ease-in-out infinite alternate; }
+.alive .a-drift2 { animation: drift2 2.4s ease-in-out infinite alternate; }
+.alive .a-bob3 { animation: bob3 1.2s ease-in-out infinite alternate; }
+.alive .a-spout { animation: spout .45s ease-in-out infinite alternate; }
+.alive .a-side { animation: side 1.6s ease-in-out infinite alternate; }
+.alive .a-snap { animation: snap .25s ease-in-out infinite alternate; }
+.alive .a-squash { animation: squash .5s ease-in-out infinite alternate; }
+.alive .a-bounce { animation: bounce .5s ease-in-out infinite alternate; }
+.alive .a-jelly { animation: jelly .4s ease-in-out infinite alternate; }
+.alive .a-drip { animation: drip 1s ease-in infinite; }
+.alive .a-roll { animation: roll 2s ease-in-out infinite alternate; }
+.alive .a-buzz { animation: buzz 1.6s ease-in-out infinite; }
+.alive .a-spin4 { animation: spin 4s linear infinite; }
+.alive .a-sway3 { animation: sway3 1s ease-in-out infinite alternate; }
+.alive .a-fall { animation: fall 3s infinite; }
+.alive .a-crawl { animation: crawl 3s ease-in-out infinite alternate; }
+.alive .a-glow { animation: glow .8s ease-in-out infinite alternate; }
+.alive .a-rain { animation: rain .8s linear infinite; }
+@keyframes nod { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
+@keyframes wave { from { transform: rotate(-14deg); } to { transform: rotate(10deg); } }
+@keyframes ear { from { transform: rotate(-14deg); } to { transform: rotate(8deg); } }
+@keyframes ear2 { from { transform: rotate(14deg); } to { transform: rotate(-8deg); } }
+@keyframes pant { to { transform: scaleY(1.35); } }
+@keyframes hop {
+  0%, 100% { transform: none; } 15% { transform: scale(1.1, .88); }
+  45% { transform: translateY(-60px) scale(.94, 1.08); } 75% { transform: none; }
+}
+@keyframes ufo { from { transform: rotate(-5deg); } to { transform: translateY(-18px) rotate(5deg); } }
+@keyframes light { to { transform: scale(1.45); } }
+@keyframes beam { to { opacity: .45; } }
+@keyframes rock { from { transform: rotate(-8deg); } to { transform: rotate(8deg); } }
+@keyframes drift2 { to { transform: translateX(30px); } }
+@keyframes bob3 { from { transform: rotate(-3deg); } to { transform: translateY(12px) rotate(3deg); } }
+@keyframes spout { from { transform: scaleY(.3); } to { transform: scaleY(1.25); } }
+@keyframes side { from { transform: translateX(-50px); } to { transform: translateX(50px); } }
+@keyframes snap { to { transform: rotate(-22deg); } }
+@keyframes squash { from { transform: scale(1.08, .9); } to { transform: scale(.95, 1.08); } }
+@keyframes bounce { to { transform: translateY(-24px); } }
+@keyframes jelly { from { transform: rotate(-6deg) skewX(4deg); } to { transform: rotate(6deg) skewX(-4deg); } }
+@keyframes drip { 70% { transform: translateY(16px) scaleY(1.3); } }
+@keyframes roll { from { transform: translateX(-70px) rotate(-90deg); } to { transform: translateX(70px) rotate(90deg); } }
+@keyframes buzz {
+  0%, 100% { transform: none; } 25% { transform: translate(-60px, -30px) rotate(-10deg); }
+  50% { transform: translate(-120px, 10px); } 75% { transform: translate(-50px, 40px) rotate(10deg); }
+}
+@keyframes sway3 { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
+@keyframes fall {
+  0%, 25% { transform: none; animation-timing-function: ease-in; }
+  50% { transform: translateY(238px); animation-timing-function: ease-out; }
+  58% { transform: translateY(215px); animation-timing-function: ease-in; }
+  66%, 100% { transform: translateY(238px); }
+}
+@keyframes crawl { from { transform: translateX(-30px) scaleX(.97); } to { transform: translateX(30px) scaleX(1.03); } }
+@keyframes glow { to { transform: scale(1.05); } }
+@keyframes rain { 0% { transform: translateY(-10px); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(30px); opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
   .r.pop, .btn.armed, .spark, .alive g { animation: none !important; }
@@ -247,13 +331,23 @@ g[class^="a-"] { transform-box: view-box; }
         <svg viewBox="0 0 24 24" fill="none" stroke="#2b2140" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
       </button>
     </div>
-    <div class="gallery" id="gallery"></div>
+    <div class="gallery cats" id="gallery"></div>
+  </section>
+
+  <section id="cat" class="view" hidden>
+    <div class="view-top">
+      <button class="btn yellow" id="catHomeBtn" aria-label="חזרה לקטגוריות">
+        <svg viewBox="0 0 24 24" fill="#fff" stroke="#2b2140" stroke-width="2.4" stroke-linejoin="round"><path d="M3 11 L12 3 L21 11 V21 H15 V15 H9 V21 H3Z"/></svg>
+      </button>
+      <div class="cat-icon" id="catIcon"></div>
+    </div>
+    <div class="gallery" id="catGallery"></div>
   </section>
 
   <section id="paint" hidden>
     <div class="tools">
       <button class="btn yellow" id="homeBtn" aria-label="חזרה לציורים">
-        <svg viewBox="0 0 24 24" fill="#fff" stroke="#2b2140" stroke-width="2.4" stroke-linejoin="round"><path d="M3 11 L12 3 L21 11 V21 H15 V15 H9 V21 H3Z"/></svg>
+        <svg viewBox="0 0 24 24" fill="#fff" stroke="#2b2140" stroke-width="2.4" stroke-linejoin="round"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg>
       </button>
       <span class="spacer"></span>
       <button class="btn" id="undoBtn" aria-label="ביטול">
@@ -297,8 +391,29 @@ g[class^="a-"] { transform-box: view-box; }
   const W = (x, y, r) => `<circle class="w" cx="${x}" cy="${y}" r="${r}"/>`;
   const BG = `<rect class="r bg" x="2" y="2" width="396" height="396" rx="26"/>`;
   const ground = (a, b, c) => P(`M2 ${a} Q100 ${b} 200 ${c} T398 ${a - 6} V372 a24 24 0 0 1 -24 24 H26 a24 24 0 0 1 -24 -24Z`);
-  const flower = (x, y) => L(`M${x} ${y + 18} V352`) +
+  const flower = (x, y, bottom = 352) => L(`M${x} ${y + 18} V${bottom}`) +
     [0, 72, 144, 216, 288].map(a => C(f(x + 17 * Math.cos(a * Math.PI / 180)), f(y + 17 * Math.sin(a * Math.PI / 180)), 13)).join('') + C(x, y, 11);
+  const pt = (cx, cy, r, a) => f(cx + r * Math.cos(a)) + ' ' + f(cy + r * Math.sin(a));
+  const H = (cx, cy, s) => `M${cx} ${cy + s} C${cx - 1.6 * s} ${cy - .2 * s} ${cx - .6 * s} ${cy - 1.4 * s} ${cx} ${cy - .5 * s} C${cx + .6 * s} ${cy - 1.4 * s} ${cx + 1.6 * s} ${cy - .2 * s} ${cx} ${cy + s}Z`;
+  const cloud = (x, y, s) => `M${x} ${y} a${16 * s} ${16 * s} 0 0 1 ${8 * s} ${-28 * s} a${22 * s} ${22 * s} 0 0 1 ${40 * s} 0 a${16 * s} ${16 * s} 0 0 1 ${2 * s} ${28 * s}z`;
+  const drop = (x, y) => `M${x} ${y} Q${x + 13} ${y + 20} ${x} ${y + 24} Q${x - 13} ${y + 20} ${x} ${y}Z`;
+  const band = (r1, r2) => `M${200 - r2} 280 A${r2} ${r2} 0 0 1 ${200 + r2} 280 L${200 + r1} 280 A${r1} ${r1} 0 0 0 ${200 - r1} 280Z`;
+  const rays = (cx, cy, r1, r2, n) => [...Array(n)].map((_, i) => { const a = i / n * 2 * Math.PI; return `M${pt(cx, cy, r1, a)} L${pt(cx, cy, r2, a)}`; }).join(' ');
+  // pinwheel slices with curved edges: each slice is its own colorable region
+  const swirl = (cx, cy, R, n) => [...Array(n)].map((_, k) => {
+    const a0 = k * 2 * Math.PI / n, a1 = a0 + 2 * Math.PI / n, tw = .9;
+    return P(`M${cx} ${cy} Q${pt(cx, cy, R * .6, a0 + tw)} ${pt(cx, cy, R, a0)} A${R} ${R} 0 0 1 ${pt(cx, cy, R, a1)} Q${pt(cx, cy, R * .6, a1 + tw)} ${cx} ${cy}Z`);
+  }).join('');
+  const wavy = (cx, cy, R, amp, n, steps = 108) => {
+    let d = '';
+    for (let i = 0; i <= steps; i++) { const a = i / steps * 2 * Math.PI; d += (i ? 'L' : 'M') + pt(cx, cy, R + amp * Math.sin(n * a), a); }
+    return d + 'Z';
+  };
+  const bumps = (cx, cy, R, n) => {
+    const ps = [...Array(n)].map((_, i) => pt(cx, cy, R, i / n * 2 * Math.PI - Math.PI / 2));
+    const rb = f(R * Math.sin(Math.PI / n) * 1.15);
+    return `M${ps[0]}` + ps.slice(1).concat([ps[0]]).map(p => ` A${rb} ${rb} 0 0 1 ${p}`).join('') + 'Z';
+  };
 
   // ---------- the drawings (all original). Region order must stay stable: saved fills are stored by index. ----------
   const G = (cls, inner, ox, oy, extra = '') => `<g class="${cls}" style="transform-origin:${ox}px ${oy}px;${extra}">${inner}</g>`;
@@ -402,6 +517,181 @@ g[class^="a-"] { transform-box: view-box; }
         C(200, 132, 12) + C(160, 142, 8) + C(240, 142, 8) +
         G('a-blink', E(170, 178, 18, 22) + E(230, 178, 18, 22) + K(172, 182, 9) + K(232, 182, 9) + W(176, 177, 3) + W(236, 177, 3), 200, 178) +
         C(146, 208, 10) + C(254, 208, 10) + L('M184 207 Q200 220 216 207'), 200, 220)
+    },
+    // ===== princess & magic =====
+    { id: 'unicorn', svg:
+      BG + TW(60, 70, 20, undefined, 0) + TW(330, 60, 16, undefined, 1) + TW(70, 330, 16, undefined, 2) + TW(356, 172, 13, undefined, 3) +
+      G('a-beat', P(H(80, 135, 16)), 80, 135) + G('a-beat', P(H(60, 250, 16)), 60, 250, 'animation-delay:-.3s') +
+      G('a-nod',
+        G('a-wig', P('M222 104 Q285 72 305 128 Q296 148 280 156Z'), 280, 150) +
+        G('a-wig', P('M281 152 Q326 160 324 205 Q320 226 293 228Z'), 290, 190, 'animation-delay:-.15s') +
+        G('a-wig', P('M294 226 Q338 245 328 292 Q318 318 299 320Z'), 296, 270, 'animation-delay:-.3s') +
+        G('a-wig', P('M299 318 Q335 335 325 380 Q315 396 300 396Z'), 300, 350, 'animation-delay:-.45s') +
+        P('M212 112 L228 58 L246 122Z') +
+        G('a-pulse', P('M168 140 L138 48 L196 124Z'), 165, 110) + L('M150 86 L165 80 M157 110 L181 102') +
+        P('M180 396 Q190 300 170 262 Q120 272 95 252 Q75 236 90 210 Q110 172 150 152 Q170 112 215 106 Q265 106 280 160 Q300 230 300 396Z') +
+        P('M178 122 Q150 110 158 150 Q172 138 196 132Z') +
+        G('a-blink', E(165, 190, 11, 14) + K(167, 193, 6) + W(169, 189, 2), 165, 190) +
+        C(140, 226, 11) + K(100, 228, 4) + L('M98 244 Q112 252 128 246'), 240, 396)
+    },
+    { id: 'wand', svg:
+      BG + G('a-beat', P(H(80, 90, 22)), 80, 90) + G('a-beat', P(H(160, 60, 14)), 160, 60, 'animation-delay:-.2s') +
+      G('a-beat', P(H(345, 300, 20)), 345, 300, 'animation-delay:-.4s') + G('a-beat', P(H(60, 220, 14)), 60, 220, 'animation-delay:-.1s') +
+      TW(205, 80, 14, undefined, 0) + TW(350, 60, 16, undefined, 1) + TW(250, 335, 14, undefined, 2) +
+      G('a-wave',
+        P('M90 330 L250 170 L270 190 L110 350Z') +
+        P('M130 290 L145 275 L165 295 L150 310Z') + P('M190 230 L205 215 L225 235 L210 250Z') + C(100, 340, 16) +
+        G('a-pulse', S(285, 150, 70, 30) + C(262, 156, 7) + C(308, 156, 7) + K(272, 142, 5) + K(298, 142, 5) + L('M274 156 Q285 166 296 156'), 285, 150), 100, 340) +
+      L('M120 160 v18 M111 169 h18 M330 220 v16 M322 228 h16')
+    },
+    // ===== animals =====
+    { id: 'dog', svg:
+      BG + E(200, 365, 165, 24) +
+      G('a-tail', P('M278 300 Q340 280 346 228 Q350 212 334 218 Q330 258 283 272Z'), 282, 288) +
+      E(200, 300, 85, 68) + E(200, 318, 40, 38) + E(165, 360, 26, 14) + E(235, 360, 26, 14) +
+      P('M140 240 Q200 268 260 240 L258 256 Q200 286 142 256Z') + C(200, 282, 11) +
+      G('a-head',
+        E(200, 160, 78, 70) + E(236, 148, 24, 22) +
+        G('a-blink', C(168, 150, 11) + C(232, 150, 11) + K(170, 152, 6) + K(234, 152, 6) + W(172, 149, 2) + W(236, 149, 2), 200, 150) +
+        E(200, 198, 42, 30) + G('a-pant', P('M190 214 Q191 240 200 240 Q209 240 210 214Z'), 200, 214) +
+        E(200, 184, 15, 10) + W(195, 181, 3) +
+        L('M200 194 V210 M200 210 Q188 222 176 210 M200 210 Q212 222 224 210') +
+        G('a-ear', P('M138 112 Q92 112 94 192 Q97 228 127 214 Q142 165 152 128Z'), 145, 118) +
+        G('a-ear2', P('M262 112 Q308 112 306 192 Q303 228 273 214 Q258 165 248 128Z'), 255, 118), 200, 240)
+    },
+    { id: 'bunny', svg:
+      BG + ground(345, 330, 347) + flower(55, 300, 352) +
+      G('a-sway', P('M305 272 Q292 236 314 246 Q320 224 330 248 Q352 238 337 272Z') + P('M295 270 L347 270 L321 365Z') + L('M306 296 h18 M313 320 h12'), 321, 365) +
+      G('a-hop',
+        C(276, 322, 18) + E(200, 295, 80, 68) + E(200, 305, 42, 42) + E(160, 358, 30, 15) + E(240, 358, 30, 15) +
+        G('a-wig', P('M168 150 Q138 40 163 28 Q193 28 190 140Z') + P('M170 132 Q152 60 166 48 Q182 50 182 132Z'), 180, 145) +
+        G('a-wig', P('M212 140 Q208 28 238 30 Q264 44 232 152Z') + P('M218 132 Q220 52 234 52 Q248 62 228 136Z'), 220, 145, 'animation-delay:-.2s') +
+        C(200, 190, 62) +
+        G('a-blink', K(178, 182, 8) + K(222, 182, 8) + W(181, 179, 3) + W(225, 179, 3), 200, 182) +
+        C(160, 208, 11) + C(240, 208, 11) + P('M192 204 H208 L200 213Z') +
+        L('M200 213 V220 M200 220 Q192 229 185 222 M200 220 Q208 229 215 222') +
+        L('M128 200 L158 204 M128 214 L158 212 M272 200 L242 204 M272 214 L242 212'), 200, 372)
+    },
+    // ===== space =====
+    { id: 'ufo', svg:
+      BG + TW(50, 50, 16, undefined, 0) + TW(300, 110, 12, undefined, 1) + TW(360, 150, 12, undefined, 2) + TW(40, 170, 12, undefined, 3) +
+      C(345, 60, 26) + C(338, 52, 6) +
+      G('a-beam', P('M168 228 L110 360 H290 L232 228Z'), 200, 300) + TW(200, 318, 16, undefined, 4) +
+      ground(350, 338, 352) +
+      G('a-ufo',
+        P('M128 212 Q200 258 272 212Z') + P('M148 186 Q148 112 200 112 Q252 112 252 186Z') +
+        L('M190 132 L184 120 M210 132 L216 120') + C(200, 152, 22) + K(192, 150, 4) + K(208, 150, 4) + L('M193 160 Q200 165 207 160') +
+        E(200, 200, 110, 30) +
+        [130, 165, 200, 235, 270].map((x, i) => G('a-light', C(x, x === 200 ? 210 : (x === 165 || x === 235 ? 207 : 198), 8), x, 205, `animation-delay:${-i * .12}s`)).join(''), 200, 200)
+    },
+    { id: 'moon', svg:
+      BG + TW(60, 60, 16, undefined, 0) + TW(40, 150, 12, undefined, 1) + TW(340, 230, 14, undefined, 2) + TW(355, 330, 14, undefined, 3) + TW(330, 40, 10, undefined, 4) +
+      G('a-rock',
+        P('M250 70 A135 135 0 1 0 260 330 A150 150 0 0 1 250 70Z') + C(122, 205, 11) +
+        L('M150 175 Q163 186 176 175 M152 182 L148 190 M163 186 L163 194') + L('M150 228 Q162 238 174 226'), 200, 200) +
+      G('a-rise', L('M285 140 h18 l-18 18 h18 M312 104 h14 l-14 14 h14 M334 74 h10 l-10 10 h10'), 300, 110) +
+      G('a-drift', P(cloud(30, 372, 2.2)), 85, 330) + G('a-drift2', P(cloud(190, 388, 2.4)), 250, 340)
+    },
+    // ===== sea =====
+    { id: 'whale', svg:
+      BG + G('a-pulse', C(60, 60, 26), 60, 60) + G('a-drift', P(cloud(250, 92, 1.6)), 290, 70) +
+      G('a-bob3',
+        G('a-spout', P('M150 150 Q145 112 125 97 Q140 93 152 106 Q158 82 168 72 Q170 96 162 110 Q175 96 192 98 Q172 112 164 150Z'), 157, 150) +
+        G('a-wag', P('M290 225 Q330 205 345 165 Q372 172 362 205 Q388 218 372 240 Q340 248 290 245Z'), 295, 235) +
+        E(185, 225, 120, 72) + K(120, 210, 7) + W(122, 207, 2.5) + C(100, 234, 10) + L('M72 238 Q100 258 135 246'), 185, 240) +
+      ground(262, 248, 262) + L('M60 300 q15 -10 30 0 M250 318 q15 -10 30 0 M150 350 q15 -10 30 0 M320 360 q12 -8 24 0')
+    },
+    { id: 'crab', svg:
+      BG + G('a-rise', C(330, 90, 12) + C(355, 58, 8), 340, 75) + ground(300, 285, 302) +
+      P('M30 360 Q55 320 80 360Z') + L('M55 358 V330 M42 358 L47 336 M68 358 L63 336') + G('a-spin', S(345, 345, 20, 9), 345, 345) +
+      G('a-side',
+        P('M135 250 L85 230 L78 244 L132 265Z') + P('M130 275 L78 272 L78 287 L130 290Z') + P('M137 298 L92 318 L100 330 L145 310Z') +
+        P('M140 238 L112 180 L126 174 L154 232Z') +
+        G('a-snap', P('M118 182 Q70 175 72 125 Q92 142 108 138 Q100 112 122 102 Q148 140 118 182Z'), 118, 180) +
+        '<g transform="matrix(-1 0 0 1 400 0)">' +
+        P('M135 250 L85 230 L78 244 L132 265Z') + P('M130 275 L78 272 L78 287 L130 290Z') + P('M137 298 L92 318 L100 330 L145 310Z') +
+        P('M140 238 L112 180 L126 174 L154 232Z') +
+        G('a-snap', P('M118 182 Q70 175 72 125 Q92 142 108 138 Q100 112 122 102 Q148 140 118 182Z'), 118, 180, 'animation-delay:-.12s') + '</g>' +
+        E(200, 270, 75, 50) + C(170, 250, 6) + C(230, 250, 6) +
+        G('a-wig', L('M178 222 V190 M222 222 V190') + C(178, 182, 13) + C(222, 182, 13) + K(180, 184, 6) + K(224, 184, 6) + W(182, 181, 2) + W(226, 181, 2), 200, 222) +
+        C(158, 278, 10) + C(242, 278, 10) + L('M182 284 Q200 298 218 284'), 200, 270)
+    },
+    // ===== sweets =====
+    { id: 'cupcake', svg:
+      BG + TW(55, 70, 18, undefined, 0) + TW(345, 80, 16, undefined, 1) + TW(345, 300, 14, undefined, 2) + TW(55, 300, 14, undefined, 3) +
+      E(200, 362, 130, 18) +
+      G('a-squash',
+        [0, 1, 2, 3, 4].map(i => P(`M${110 + 36 * i} 232 L${146 + 36 * i} 232 L${161 + 26 * i} 360 L${135 + 26 * i} 360Z`)).join('') +
+        P('M95 235 Q80 200 120 190 Q110 150 160 145 Q170 105 200 100 Q230 105 240 145 Q290 150 280 190 Q320 200 305 235Z') +
+        [[125, 215], [145, 172], [178, 140], [222, 140], [255, 172], [278, 212], [200, 120]].map(([x, y]) => C(x, y, 6)).join('') +
+        C(155, 212, 8) + C(245, 212, 8) + K(172, 198, 6) + K(228, 198, 6) + W(174, 195, 2) + W(230, 195, 2) + L('M186 214 Q200 226 214 214') +
+        G('a-bounce', C(200, 82, 20) + L('M200 62 Q206 44 222 36') + W(193, 76, 4), 200, 100), 200, 362)
+    },
+    { id: 'icecream', svg:
+      BG + TW(70, 80, 18, undefined, 0) + TW(330, 80, 16, undefined, 1) +
+      G('a-beat', P(H(70, 300, 18)), 70, 300) + G('a-beat', P(H(330, 300, 18)), 330, 300, 'animation-delay:-.3s') +
+      G('a-jelly',
+        P('M150 230 L200 375 L250 230Z') +
+        L('M165 273 L247 237 M180 317 L235 273 M192 353 L220 317 M235 273 L152 237 M220 317 L165 273 M207 353 L180 317') +
+        P('M150 172 Q140 100 200 92 Q260 100 250 172 Q225 182 200 174 Q175 182 150 172Z') +
+        C(178, 128, 6) + C(215, 118, 6) + C(228, 148, 6) + C(172, 152, 6) +
+        P('M140 235 Q130 175 200 165 Q270 175 260 235 Q250 250 240 238 Q230 255 215 240 Q200 258 185 240 Q170 255 160 238 Q150 250 140 235Z') +
+        C(165, 212, 7) + C(235, 212, 7) + K(180, 200, 5) + K(220, 200, 5) + W(182, 198, 2) + W(222, 198, 2) + L('M190 214 Q200 222 210 214') +
+        G('a-drip', P('M226 238 Q234 262 227 270 Q219 262 222 238Z'), 226, 238) +
+        G('a-bounce', C(200, 78, 16) + L('M200 62 Q204 48 218 42') + W(194, 73, 3.5), 200, 90), 200, 375)
+    },
+    { id: 'lollipop', svg:
+      BG + TW(60, 60, 18, undefined, 0) + TW(345, 70, 16, undefined, 1) + TW(70, 320, 14, undefined, 2) + TW(335, 330, 16, undefined, 3) +
+      G('a-beat', P(H(60, 180, 14)), 60, 180) + G('a-beat', P(H(345, 200, 14)), 345, 200, 'animation-delay:-.3s') +
+      G('a-bob',
+        B(190, 230, 20, 150, 6) + G('a-spin', swirl(200, 150, 95, 8), 200, 150) +
+        G('a-wig', P('M200 262 L162 244 L162 282Z') + P('M200 262 L238 244 L238 282Z') + C(200, 262, 10), 200, 262), 200, 300)
+    },
+    { id: 'donut', svg:
+      BG + TW(55, 60, 16, undefined, 0) + TW(345, 60, 16, undefined, 1) + E(200, 345, 150, 26) +
+      G('a-roll',
+        '<path class="r" fill-rule="evenodd" d="M80 210 a120 120 0 1 0 240 0 a120 120 0 1 0 -240 0Z M160 210 a40 40 0 1 0 80 0 a40 40 0 1 0 -80 0Z"/>' +
+        `<path class="r" fill-rule="evenodd" d="${wavy(200, 210, 98, 7, 9)} M152 210 a48 48 0 1 0 96 0 a48 48 0 1 0 -96 0Z"/>` +
+        [0, 35, 145, 180, 270].map(a => C(f(200 + 75 * Math.cos(a * Math.PI / 180)), f(210 + 75 * Math.sin(a * Math.PI / 180)), 7)).join('') +
+        C(150, 175, 9) + C(250, 175, 9) + K(172, 150, 7) + K(228, 150, 7) + W(174, 147, 2.5) + W(230, 147, 2.5) + L('M178 270 Q200 286 222 270'), 200, 210)
+    },
+    // ===== garden =====
+    { id: 'flowerpot', svg:
+      BG + G('a-pulse', C(340, 60, 28) + L(rays(340, 60, 36, 50, 10)), 340, 60) + ground(330, 318, 332) +
+      G('a-sway',
+        P('M196 270 Q190 200 200 140 L206 140 Q198 200 204 270Z') +
+        P('M198 230 Q150 200 135 220 Q160 245 198 240Z') + P('M202 205 Q250 175 268 195 Q240 222 202 215Z') +
+        G('a-spin4', [0, 45, 90, 135, 180, 225, 270, 315].map(a => C(f(200 + 40 * Math.cos(a * Math.PI / 180)), f(120 + 40 * Math.sin(a * Math.PI / 180)), 22)).join(''), 200, 120) +
+        C(200, 120, 30) + K(189, 114, 5) + K(211, 114, 5) + L('M188 128 Q200 138 212 128'), 200, 272) +
+      P('M140 290 L160 375 H240 L260 290Z') + B(128, 270, 144, 26, 6) +
+      G('a-buzz', E(296, 150, 10, 14) + E(312, 150, 10, 14) + E(304, 170, 22, 15) + L('M298 157 V183 M310 157 V183') + K(320, 166, 3), 304, 170)
+    },
+    { id: 'tree', svg:
+      BG + G('a-drift', P(cloud(30, 92, 1.8)), 75, 70) + ground(330, 315, 332) +
+      G('a-sway', flower(60, 300, 345), 60, 345) + G('a-sway2', flower(345, 305, 345), 345, 345) +
+      P('M178 365 Q188 300 185 215 H215 Q212 300 224 365Z') + K(200, 290, 7) +
+      G('a-sway3',
+        P(bumps(200, 155, 100, 9)) +
+        [[150, 135], [245, 115], [200, 190], [255, 180], [145, 195]].map(([x, y]) => C(x, y, 14) + L(`M${x} ${y - 14} v-8`)).join(''), 200, 365) +
+      G('a-fall', C(200, 110, 14) + L('M200 96 v-8'), 200, 110)
+    },
+    { id: 'snail', svg:
+      BG + G('a-pulse', C(345, 65, 26), 345, 65) + G('a-drift', P(cloud(30, 100, 1.6)), 70, 80) + ground(318, 305, 320) +
+      G('a-sway', flower(60, 250, 330), 60, 330) +
+      G('a-crawl',
+        P('M70 318 Q75 295 120 295 H290 Q300 250 330 235 Q365 225 368 262 Q368 300 330 318Z') +
+        G('a-wig', L('M330 240 L318 196 M350 236 L360 193') + C(317, 190, 8) + C(361, 187, 8), 340, 238) +
+        K(345, 255, 5) + W(347, 253, 2) + C(328, 272, 8) + L('M335 280 Q348 288 358 278') +
+        C(195, 225, 85) + C(200, 228, 58) + C(205, 232, 34) + C(208, 235, 14), 200, 300)
+    },
+    { id: 'rainbow', svg:
+      BG + G('a-pulse', C(60, 60, 26) + L(rays(60, 60, 34, 46, 8)), 60, 60) +
+      L('M290 60 q10 -10 20 0 q10 -10 20 0 M330 95 q8 -8 16 0 q8 -8 16 0') +
+      G('a-glow', [170, 146, 122, 98, 74].map(r => P(band(r - 24, r))).join(''), 200, 280) +
+      G('a-rain', P(drop(40, 335)) + P(drop(120, 335)) + P(drop(300, 335)), 200, 345) +
+      G('a-rain', P(drop(80, 350)) + P(drop(260, 350)) + P(drop(345, 350)), 200, 360, 'animation-delay:-.4s') +
+      G('a-bob2', P(cloud(10, 322, 2.8)) + K(65, 275, 5) + K(95, 275, 5) + L('M70 292 Q80 300 90 292'), 80, 280) +
+      G('a-bob2', P(cloud(250, 322, 2.8)) + K(305, 275, 5) + K(335, 275, 5) + L('M310 292 Q320 300 330 292'), 320, 280, 'animation-delay:-.45s')
     }
   ];
 
@@ -440,8 +730,85 @@ g[class^="a-"] { transform-box: view-box; }
       voice('sine', [[0, 140], [.25, 560], [.7, 200]], .16, 0, { vib: [12, 60] });
       voice('triangle', [[0, 200], [.25, 720], [.8, 250]], .08, .9, { vib: [12, 80] });
       [1.9, 2.1, 2.4].forEach(blub);
+    },
+    unicorn: () => {
+      [523, 587, 659, 784, 880, 1047, 1175, 1319, 1568, 1760].forEach((f, i) => N(f, i * .06, .4, 'sine', .06));
+      voice('sawtooth', [[0, 600], [.15, 1100], [.8, 450]], .07, 1.0, { lp: 2500, vib: [16, 90] });
+    },
+    wand: () => {
+      voice('sine', [[0, 400], [.5, 2400]], .1);
+      for (let i = 0; i < 10; i++) N(1500 + Math.random() * 1500, .5 + i * .09, .2, 'sine', .05);
+    },
+    dog: () => {
+      [0, .35, 1.6].forEach(t => { voice('sawtooth', [[0, 260], [.04, 480], [.16, 220]], .16, t, { lp: 1100 }); noise(t, .12, 1500, 600, .1); });
+      [.8, 1.0, 1.2, 1.4].forEach(t => noise(t, .1, 2500, 2000, .05));
+    },
+    bunny: () => {
+      [0, .7, 1.4, 2.1].forEach(t => voice('sine', [[0, 220], [.12, 660], [.25, 330]], .12, t, { vib: [20, 30] }));
+      [2.7, 2.85, 3.0].forEach(t => noise(t, .07, 3000, 1500, .1));
+    },
+    ufo: () => {
+      voice('sine', [[0, 500], [.8, 900], [1.6, 450], [2.4, 800]], .1, 0, { vib: [7, 50] });
+      [1200, 900, 1500].forEach((f, i) => N(f, 2.5 + i * .15, .1, 'square', .05));
+    },
+    moon: () => {
+      [659, 784, 880, 784, 659, 587, 523].forEach((f, i) => N(f, i * .42, .5, 'triangle', .09));
+      [262, 196].forEach((f, i) => N(f, i * 1.5, 1.4, 'sine', .06));
+    },
+    whale: () => {
+      voice('sine', [[0, 260], [.6, 420], [1.4, 230]], .15, 0, { vib: [5, 12] });
+      noise(1.0, .8, 600, 2500, .15);
+      voice('sine', [[0, 330], [.5, 500], [1.1, 300]], .1, 1.6, { vib: [5, 12] });
+    },
+    crab: () => {
+      [0, .15, .6, .75, 1.2, 1.35].forEach(t => voice('square', [[0, 2200], [.03, 1400]], .06, t));
+      [784, 659, 784, 880, 784].forEach((f, i) => N(f, 1.7 + i * .15, .15, 'triangle', .1));
+    },
+    cupcake: () => {
+      [523, 659, 784, 1047, 784, 1047].forEach((f, i) => N(f, i * .12, .2, 'triangle', .1));
+      voice('sine', [[0, 300], [.06, 1200]], .12, 1.0);
+    },
+    icecream: () => {
+      noise(0, .3, 800, 3500, .12); noise(.45, .3, 800, 3500, .12);
+      voice('sine', [[0, 280], [.6, 320]], .12, 1.0, { vib: [5, 10] });
+      [659, 784, 1047].forEach((f, i) => N(f, 1.8 + i * .12, .2, 'triangle', .09));
+    },
+    lollipop: () => {
+      voice('sine', [[0, 300], [1.5, 1400]], .08, 0, { vib: [14, 40] });
+      [1568, 2093, 2637, 2093, 2637].forEach((f, i) => N(f, 1.6 + i * .1, .25, 'sine', .05));
+    },
+    donut: () => {
+      [0, .6, 1.2].forEach(t => voice('sine', [[0, 180], [.12, 500], [.25, 260]], .12, t, { vib: [18, 25] }));
+      [1.8, 2.05, 2.3].forEach(t => voice('square', [[0, 200], [.08, 140]], .07, t, { lp: 600 }));
+    },
+    flowerpot: () => {
+      voice('sawtooth', [[0, 190], [1.6, 210]], .06, 0, { lp: 900, vib: [9, 25] });
+      [1.8, 1.95, 2.3, 2.45].forEach(t => voice('sine', [[0, 2200], [.08, 3200]], .06, t));
+    },
+    tree: () => {
+      noise(0, 1.4, 400, 1200, .1);
+      voice('sine', [[0, 500], [.15, 150]], .15, 1.5);
+      [2.0, 2.15, 2.5, 2.65].forEach(t => voice('sine', [[0, 2400], [.08, 3300]], .06, t));
+    },
+    snail: () => {
+      voice('sine', [[0, 200], [.6, 300]], .08, 0); voice('sine', [[0, 250], [.6, 350]], .08, .8);
+      [523, 587, 659, 784].forEach((f, i) => N(f, 1.6 + i * .2, .25, 'triangle', .09));
+    },
+    rainbow: () => {
+      for (let i = 0; i < 14; i++) voice('sine', [[0, 1800 + Math.random() * 1200], [.05, 1200]], .04, i * .07 + Math.random() * .05);
+      [523, 587, 659, 698, 784, 880, 988, 1047].forEach((f, i) => N(f, 1.2 + i * .1, .35, 'sine', .06));
     }
   };
+
+  const CATS = [
+    { id: 'castle', pages: ['castle', 'crown', 'unicorn', 'wand'] },
+    { id: 'animal', pages: ['cat', 'butterfly', 'dog', 'bunny'] },
+    { id: 'space', pages: ['rocket', 'planet', 'ufo', 'moon'] },
+    { id: 'sea', pages: ['fish', 'octopus', 'whale', 'crab'] },
+    { id: 'sweets', pages: ['cupcake', 'icecream', 'lollipop', 'donut'] },
+    { id: 'garden', pages: ['flowerpot', 'tree', 'snail', 'rainbow'] }
+  ];
+  const byId = Object.fromEntries(PAGES.map(p => [p.id, p]));
 
   const COLORS = ['#ff4d4d', '#ff9f1c', '#ffd93d', '#8ae234', '#2fbf71', '#2ec4b6', '#4cc9f0', '#3a6ff7',
     '#8b5cf6', '#c77dff', '#ff6fb5', '#ffc2e2', '#a0673a', '#ffcfa3', '#9aa3b5', '#4a4060',
@@ -563,16 +930,34 @@ g[class^="a-"] { transform-box: view-box; }
 
   // ---------- home ----------
   const badge = `<svg class="badge" viewBox="0 0 50 50"><path d="${starD(25, 26, 23, 11)}" fill="#ffd93d" stroke="#2b2140" stroke-width="3.5" stroke-linejoin="round"/></svg>`;
+  const miniStar = on => `<svg viewBox="0 0 24 24"><path d="${starD(12, 12.5, 11, 5)}" fill="${on ? '#ffd93d' : '#ffffff'}" stroke="#2b2140" stroke-width="2.2" stroke-linejoin="round"/></svg>`;
+  let curCat = null;
+  const show = id => ['home', 'cat', 'paint'].forEach(v => { $(v).hidden = v !== id; });
   const renderHome = () => {
     const g = $('gallery'); g.innerHTML = '';
-    PAGES.forEach(p => {
+    CATS.forEach(c => {
       const b = document.createElement('button');
-      b.className = 'card t-' + p.t; b.setAttribute('aria-label', p.id);
+      b.className = 'card t-' + c.id; b.setAttribute('aria-label', c.id);
+      b.appendChild(buildSvg(byId[c.pages[0]]));
+      b.insertAdjacentHTML('beforeend', `<span class="stars">${c.pages.map(id => miniStar(st.done[id])).join('')}</span>`);
+      b.onclick = () => { tone(523, 0, .12, 'sine'); openCat(c); };
+      g.appendChild(b);
+    });
+  };
+  const openCat = c => {
+    curCat = c;
+    const icon = $('catIcon'); icon.className = 'cat-icon t-' + c.id; icon.innerHTML = '';
+    icon.appendChild(buildSvg(byId[c.pages[0]]));
+    const g = $('catGallery'); g.innerHTML = '';
+    c.pages.forEach(id => {
+      const p = byId[id], b = document.createElement('button');
+      b.className = 'card t-' + c.id; b.setAttribute('aria-label', p.id);
       b.appendChild(buildSvg(p));
       if (st.done[p.id]) b.insertAdjacentHTML('beforeend', badge);
       b.onclick = () => openPage(p);
       g.appendChild(b);
     });
+    show('cat');
   };
 
   // ---------- paint ----------
@@ -630,11 +1015,12 @@ g[class^="a-"] { transform-box: view-box; }
       sparks(e.clientX, e.clientY, c);
       persist(); checkDone();
     });
-    $('home').hidden = true; $('paint').hidden = false;
+    show('paint');
     renderPal();
   };
 
-  $('homeBtn').onclick = () => { tone(392, 0, .15, 'sine'); $('paint').hidden = true; $('home').hidden = false; renderHome(); };
+  $('homeBtn').onclick = () => { tone(392, 0, .15, 'sine'); clearTimeout(aliveT); openCat(curCat || CATS.find(c => c.pages.includes(page.id))); };
+  $('catHomeBtn').onclick = () => { tone(392, 0, .15, 'sine'); renderHome(); show('home'); };
   $('undoBtn').onclick = () => {
     const last = undo.pop(); if (!last) return;
     last.forEach(([i, v]) => { regions[i].style.fill = v; });
