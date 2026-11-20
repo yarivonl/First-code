@@ -328,6 +328,98 @@ g[class^="a-"] { transform-box: view-box; }
   .r.pop, .btn.armed, .spark, .alive g { animation: none !important; }
   .spark { display: none; }
 }
+
+/* ===== Pastel candy theme (illustrated backgrounds + glossy controls). Overrides the base styles above. ===== */
+:root {
+  --plum: #6b4e8a;
+  --gloss: rgba(255, 255, 255, .85);
+  --wood-hi: #e9bd88; --wood: #d39a5e; --wood-lo: #a8703c;
+}
+body {
+  background: #cfe6fb url(assets/bg_home_l.webp) center / cover no-repeat fixed;
+  color: var(--plum);
+}
+body.painting { background-image: url(assets/bg_paint_l.webp); background-color: #f3dcf1; }
+@media (orientation: portrait) {
+  body { background-image: url(assets/bg_home_p.webp); }
+  body.painting { background-image: url(assets/bg_paint_p.webp); }
+}
+.logo { height: 92px; width: auto; filter: drop-shadow(0 6px 8px rgba(107, 78, 138, .25)); }
+
+/* glossy round buttons */
+.btn {
+  position: relative; width: 70px; height: 70px; border-radius: 50%; border: none;
+  --c1: #ffe680; --c2: #ffc93a; --c3: #e3a412;
+  background: linear-gradient(180deg, var(--c1), var(--c2));
+  box-shadow: inset 0 -6px 0 rgba(0, 0, 0, .1), 0 6px 0 var(--c3), 0 12px 18px rgba(107, 78, 138, .28);
+}
+.btn::before {
+  content: ""; position: absolute; left: 18%; top: 9%; width: 64%; height: 36%; border-radius: 50%;
+  background: linear-gradient(180deg, var(--gloss), rgba(255, 255, 255, 0)); pointer-events: none;
+}
+.btn:active { transform: translateY(5px); box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .1), 0 1px 0 var(--c3), 0 4px 8px rgba(107, 78, 138, .25); }
+.btn svg { width: 34px; height: 34px; position: relative; filter: drop-shadow(0 2px 0 rgba(0, 0, 0, .15)); }
+.btn svg * { stroke: #fff !important; }
+#undoBtn { --c1: #9fd8ff; --c2: #4aa8f5; --c3: #2a7fc8; }
+#clearBtn { --c1: #ffb0b8; --c2: #ff6b7d; --c3: #d9425a; }
+#soundBtn { --c1: #e2c2ff; --c2: #b07ef0; --c3: #8a55cc; }
+#fsBtn { --c1: #b5f2dc; --c2: #5fd6ae; --c3: #33a883; }
+.btn.armed { --c1: #ff8a8a; --c2: #ff3b3b; --c3: #b81f1f; background: linear-gradient(180deg, var(--c1), var(--c2)); }
+.btn.off { opacity: .6; }
+
+/* category + drawing tiles: glossy candy squares */
+.t-princess { --tile-hi: #ffe3f1; --tile: #ffbedd; --tile-lo: #e790bd; }
+.t-castle { --tile-hi: #efe6ff; --tile: #d7c6ff; --tile-lo: #a993e4; }
+.t-animal { --tile-hi: #fff0db; --tile: #ffd3a3; --tile-lo: #e6a565; }
+.t-space { --tile-hi: #e6ecff; --tile: #c3d0ff; --tile-lo: #8d9fe0; }
+.t-sea { --tile-hi: #e0fbf8; --tile: #aeeae5; --tile-lo: #6cc2bc; }
+.t-sweets { --tile-hi: #ffecec; --tile: #ffc8cd; --tile-lo: #e2959d; }
+.t-garden { --tile-hi: #eafbe0; --tile: #c6eeae; --tile-lo: #8cc96c; }
+.card {
+  border: none; border-radius: 34px; padding: 11%;
+  background: linear-gradient(180deg, var(--tile-hi), var(--tile));
+  box-shadow: inset 0 -8px 0 rgba(0, 0, 0, .06), inset 0 6px 10px rgba(255, 255, 255, .8), 0 8px 0 var(--tile-lo), 0 18px 26px rgba(107, 78, 138, .22);
+}
+.card::before {
+  content: ""; position: absolute; left: 10%; top: 4%; width: 80%; height: 22%; border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .7), rgba(255, 255, 255, 0)); pointer-events: none; z-index: 1;
+}
+.card:active { transform: translateY(6px); box-shadow: inset 0 -6px 0 rgba(0, 0, 0, .06), 0 2px 0 var(--tile-lo), 0 6px 12px rgba(107, 78, 138, .2); }
+.cat-ic { width: 100%; height: 100%; object-fit: contain; display: block; position: relative; filter: drop-shadow(0 8px 8px rgba(107, 78, 138, .22)); }
+#catGallery .card { padding: 7%; }
+.athumb { border-radius: 24px; box-shadow: inset 0 0 0 3px rgba(255, 255, 255, .9); }
+.card .stars { background: rgba(255, 255, 255, .95); border: none; box-shadow: 0 4px 10px rgba(107, 78, 138, .18); bottom: -18px; z-index: 2; }
+.card .badge { filter: drop-shadow(0 4px 6px rgba(107, 78, 138, .3)); z-index: 2; }
+.cat-icon { border: none; border-radius: 24px; padding: 6px; background: linear-gradient(180deg, var(--tile-hi), var(--tile)); box-shadow: 0 5px 0 var(--tile-lo), 0 10px 16px rgba(107, 78, 138, .22); }
+.cat-icon img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+/* coloring page as a sheet of paper */
+.artbox { border: none; border-radius: 30px; box-shadow: 0 0 0 7px rgba(255, 255, 255, .92), 0 16px 34px rgba(107, 78, 138, .3); }
+
+/* wooden palette with paint pots */
+.pal {
+  align-self: center; padding: 16px 18px; border-radius: 44px;
+  background:
+    repeating-linear-gradient(100deg, rgba(255, 255, 255, .06) 0 6px, rgba(0, 0, 0, .03) 6px 14px),
+    linear-gradient(160deg, var(--wood-hi), var(--wood));
+  box-shadow: inset 0 4px 0 rgba(255, 255, 255, .35), inset 0 -7px 0 rgba(0, 0, 0, .12), 0 6px 0 var(--wood-lo), 0 16px 26px rgba(90, 60, 30, .3);
+}
+.sw {
+  position: relative; border: none; width: 52px; height: 52px;
+  box-shadow: inset 0 -6px 0 rgba(0, 0, 0, .18), inset 0 3px 3px rgba(255, 255, 255, .45), 0 4px 0 rgba(110, 70, 30, .45), 0 6px 8px rgba(60, 30, 10, .25);
+}
+.sw::after {
+  content: ""; position: absolute; left: 22%; top: 12%; width: 40%; height: 26%; border-radius: 50%;
+  background: rgba(255, 255, 255, .6); pointer-events: none;
+}
+.sw svg { position: relative; z-index: 1; }
+.sw.on { transform: scale(1.22) translateY(-3px); box-shadow: inset 0 -6px 0 rgba(0, 0, 0, .18), 0 0 0 4px #fff, 0 0 0 8px #ff9fd0, 0 8px 14px rgba(60, 30, 10, .3); }
+@media (orientation: landscape) and (min-width: 700px) { .pal { grid-template-columns: repeat(3, 52px); gap: 12px; } }
+#catGallery {
+  grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px;
+  width: 100%; max-width: max(300px, calc(100vh - 150px)); margin-inline: auto; box-sizing: border-box;
+}
+@media (orientation: portrait) and (min-width: 600px) { .gallery.cats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 </style>
 
 <svg class="defs" aria-hidden="true">
@@ -350,12 +442,7 @@ g[class^="a-"] { transform-box: view-box; }
 <div id="app">
   <section id="home">
     <div class="home-top">
-      <svg class="logo" viewBox="0 0 200 72" aria-hidden="true">
-        <path d="M14 58 Q40 4 100 10 Q160 4 186 58" fill="none" stroke="#ff4d4d" stroke-width="10" stroke-linecap="round"/>
-        <path d="M30 60 Q52 22 100 26 Q148 22 170 60" fill="none" stroke="#ffd93d" stroke-width="10" stroke-linecap="round"/>
-        <path d="M46 62 Q64 40 100 42 Q136 40 154 62" fill="none" stroke="#4cc9f0" stroke-width="10" stroke-linecap="round"/>
-        <path d="M100 30 L106 46 L122 48 L110 58 L114 72 L100 64 L86 72 L90 58 L78 48 L94 46Z" fill="#ffd93d" stroke="#2b2140" stroke-width="4" stroke-linejoin="round"/>
-      </svg>
+      <img class="logo" src="assets/logo.webp" alt="">
       <button class="btn mint" id="fsBtn" aria-label="מסך מלא">
         <svg viewBox="0 0 24 24" fill="none" stroke="#2b2140" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
       </button>
@@ -909,16 +996,16 @@ g[class^="a-"] { transform-box: view-box; }
   };
 
   // ---------- home ----------
-  const badge = `<svg class="badge" viewBox="0 0 50 50"><path d="${starD(25, 26, 23, 11)}" fill="#ffd93d" stroke="#2b2140" stroke-width="3.5" stroke-linejoin="round"/></svg>`;
-  const miniStar = on => `<svg viewBox="0 0 24 24"><path d="${starD(12, 12.5, 11, 5)}" fill="${on ? '#ffd93d' : '#ffffff'}" stroke="#2b2140" stroke-width="2.2" stroke-linejoin="round"/></svg>`;
+  const badge = `<svg class="badge" viewBox="0 0 50 50"><path d="${starD(25, 26, 23, 11)}" fill="#ffd23f" stroke="#e0a100" stroke-width="3.5" stroke-linejoin="round"/></svg>`;
+  const miniStar = on => `<svg viewBox="0 0 24 24"><path d="${starD(12, 12.5, 11, 5)}" fill="${on ? '#ffd23f' : '#ffffff'}" stroke="${on ? '#e0a100' : '#e8c6dc'}" stroke-width="2.2" stroke-linejoin="round"/></svg>`;
   let curCat = null;
-  const show = id => ['home', 'cat', 'paint'].forEach(v => { $(v).hidden = v !== id; });
+  const show = id => { ['home', 'cat', 'paint'].forEach(v => { $(v).hidden = v !== id; }); document.body.classList.toggle('painting', id === 'paint'); };
   const renderHome = () => {
     const g = $('gallery'); g.innerHTML = '';
     CATS.forEach(c => {
       const b = document.createElement('button');
       b.className = 'card t-' + c.id; b.setAttribute('aria-label', c.id);
-      b.appendChild(thumb(byId[c.pages[0]]));
+      b.insertAdjacentHTML('beforeend', `<img class="cat-ic" alt="" src="assets/ic_${c.id}.webp">`);
       b.insertAdjacentHTML('beforeend', `<span class="stars">${c.pages.map(id => miniStar(st.done[id])).join('')}</span>`);
       b.onclick = () => { tone(523, 0, .12, 'sine'); openCat(c); };
       g.appendChild(b);
@@ -927,7 +1014,7 @@ g[class^="a-"] { transform-box: view-box; }
   const openCat = c => {
     curCat = c;
     const icon = $('catIcon'); icon.className = 'cat-icon t-' + c.id; icon.innerHTML = '';
-    icon.appendChild(thumb(byId[c.pages[0]]));
+    icon.innerHTML = `<img alt="" src="assets/ic_${c.id}.webp">`;
     const g = $('catGallery'); g.innerHTML = '';
     c.pages.forEach(id => {
       const p = byId[id], b = document.createElement('button');
