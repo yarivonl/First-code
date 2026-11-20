@@ -1,0 +1,507 @@
+<title>צובעים בקסם</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+/* Layout: one-screen tablet app. Home = sticker-card gallery; paint = tools | drawing | palette (side columns in landscape, stacked in portrait). Single bright look on purpose. */
+:root {
+  --paper: #fff7e8;
+  --paper-dot: #f6e4c4;
+  --ink: #2b2140;
+  --sun: #ffd93d;
+  --mint: #7ee0c3;
+  --rose: #ff6fb5;
+  --card-castle: #ffd6ec;
+  --card-animal: #ffe3b0;
+  --card-space: #d3dbff;
+  --card-sea: #c4efec;
+  --white: #ffffff;
+  --danger: #ff4d4d;
+  color-scheme: light;
+}
+html, body { height: 100%; }
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  background: var(--paper);
+  background-image: radial-gradient(var(--paper-dot) 2px, transparent 2.5px);
+  background-size: 28px 28px;
+  color: var(--ink);
+  overflow: hidden;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+#app {
+  height: 100%;
+  box-sizing: border-box;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 12px;
+}
+button { font: inherit; color: var(--ink); cursor: pointer; }
+button:focus-visible { outline: 4px solid var(--rose); outline-offset: 3px; }
+
+/* shared drawing styles */
+.r { fill: var(--white); stroke: var(--ink); stroke-width: 4; stroke-linejoin: round; transform-box: fill-box; transform-origin: center; }
+.d { fill: none; stroke: var(--ink); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.k { fill: var(--ink); pointer-events: none; }
+.w { fill: var(--white); pointer-events: none; }
+.r.pop { animation: pop .28s ease-out; }
+@keyframes pop { 45% { transform: scale(1.05); } }
+
+/* chunky sticker button */
+.btn {
+  width: 64px; height: 64px; flex: none;
+  border-radius: 22px;
+  border: 4px solid var(--ink);
+  background: var(--white);
+  box-shadow: 0 6px 0 var(--ink);
+  display: grid; place-items: center;
+  padding: 0;
+  transition: transform .08s, box-shadow .08s, background .2s;
+}
+.btn:active { transform: translateY(5px); box-shadow: 0 1px 0 var(--ink); }
+.btn svg { width: 34px; height: 34px; }
+.btn.yellow { background: var(--sun); }
+.btn.mint { background: var(--mint); }
+.btn.armed { background: var(--danger); animation: wiggle .4s infinite; }
+.btn.off { opacity: .55; }
+@keyframes wiggle { 25% { transform: rotate(-8deg); } 75% { transform: rotate(8deg); } }
+
+/* home */
+#home { height: 100%; display: flex; flex-direction: column; gap: 14px; }
+.home-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.logo { height: 72px; width: auto; flex: none; }
+.gallery {
+  flex: 1; min-height: 0; overflow-y: auto;
+  display: grid; gap: 22px;
+  grid-template-columns: repeat(auto-fill, minmax(min(170px, 42vw), 1fr));
+  align-content: start;
+  padding: 6px 4px 18px;
+}
+.card {
+  position: relative;
+  aspect-ratio: 1; max-width: 100%;
+  border-radius: 30px;
+  border: 4px solid var(--ink);
+  box-shadow: 0 8px 0 var(--ink);
+  padding: 10px;
+  transition: transform .1s, box-shadow .1s;
+}
+.card:active { transform: translateY(6px); box-shadow: 0 2px 0 var(--ink); }
+.card svg { width: 100%; height: 100%; display: block; }
+.card .badge {
+  position: absolute; top: -14px; right: -10px; width: 52px; height: 52px;
+  filter: drop-shadow(0 3px 0 var(--ink));
+}
+.t-castle { background: var(--card-castle); }
+.t-animal { background: var(--card-animal); }
+.t-space { background: var(--card-space); }
+.t-sea { background: var(--card-sea); }
+
+/* paint */
+#paint {
+  height: 100%;
+  display: grid; gap: 12px;
+  grid-template-areas: "tools" "stage" "pal";
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+.tools { grid-area: tools; display: flex; gap: 12px; align-items: center; }
+.tools .spacer { flex: 1; }
+.stage { grid-area: stage; min-height: 0; display: grid; place-items: center; touch-action: none; }
+.stage svg {
+  width: 100%; height: 100%; max-width: 100%;
+  filter: drop-shadow(0 8px 0 var(--ink));
+}
+.pal {
+  grid-area: pal;
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+  padding-bottom: 6px;
+}
+.sw {
+  width: 54px; height: 54px; flex: none; padding: 0;
+  border-radius: 50%;
+  border: 4px solid var(--ink);
+  box-shadow: 0 4px 0 var(--ink);
+  transition: transform .15s;
+  display: grid; place-items: center;
+}
+.sw svg { width: 30px; height: 30px; }
+.sw.on { transform: scale(1.22) translateY(-4px); box-shadow: 0 0 0 4px var(--white), 0 0 0 8px var(--ink); }
+
+@media (orientation: landscape) and (min-width: 700px) {
+  #paint {
+    grid-template-areas: "tools stage pal";
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .tools { flex-direction: column; }
+  .pal { display: grid; grid-template-columns: repeat(3, 54px); align-content: center; gap: 12px; padding: 0 8px; }
+}
+
+/* effects */
+.spark { position: fixed; width: 22px; height: 22px; pointer-events: none; z-index: 20; animation: fly .6s ease-out forwards; }
+@keyframes fly { to { transform: translate(var(--dx), var(--dy)) scale(.2) rotate(180deg); opacity: 0; } }
+#confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 30; }
+.defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+@media (prefers-reduced-motion: reduce) {
+  .r.pop, .btn.armed, .spark { animation: none; }
+  .spark { display: none; }
+}
+</style>
+
+<svg class="defs" aria-hidden="true">
+  <defs>
+    <linearGradient id="rainbow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff4d4d"/><stop offset=".2" stop-color="#ff9f1c"/>
+      <stop offset=".4" stop-color="#ffd93d"/><stop offset=".6" stop-color="#2fbf71"/>
+      <stop offset=".8" stop-color="#4cc9f0"/><stop offset="1" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
+      <rect width="22" height="22" fill="#ffc2e2"/><circle cx="11" cy="11" r="5" fill="#ff6fb5"/>
+    </pattern>
+    <pattern id="gold" width="34" height="34" patternUnits="userSpaceOnUse">
+      <rect width="34" height="34" fill="#ffcf3d"/>
+      <path d="M17 7 L19.5 14.5 L27 17 L19.5 19.5 L17 27 L14.5 19.5 L7 17 L14.5 14.5Z" fill="#fff6c9"/>
+    </pattern>
+  </defs>
+</svg>
+
+<div id="app">
+  <section id="home">
+    <div class="home-top">
+      <svg class="logo" viewBox="0 0 200 72" aria-hidden="true">
+        <path d="M14 58 Q40 4 100 10 Q160 4 186 58" fill="none" stroke="#ff4d4d" stroke-width="10" stroke-linecap="round"/>
+        <path d="M30 60 Q52 22 100 26 Q148 22 170 60" fill="none" stroke="#ffd93d" stroke-width="10" stroke-linecap="round"/>
+        <path d="M46 62 Q64 40 100 42 Q136 40 154 62" fill="none" stroke="#4cc9f0" stroke-width="10" stroke-linecap="round"/>
+        <path d="M100 30 L106 46 L122 48 L110 58 L114 72 L100 64 L86 72 L90 58 L78 48 L94 46Z" fill="#ffd93d" stroke="#2b2140" stroke-width="4" stroke-linejoin="round"/>
+      </svg>
+      <button class="btn mint" id="fsBtn" aria-label="מסך מלא">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#2b2140" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      </button>
+    </div>
+    <div class="gallery" id="gallery"></div>
+  </section>
+
+  <section id="paint" hidden>
+    <div class="tools">
+      <button class="btn yellow" id="homeBtn" aria-label="חזרה לציורים">
+        <svg viewBox="0 0 24 24" fill="#fff" stroke="#2b2140" stroke-width="2.4" stroke-linejoin="round"><path d="M3 11 L12 3 L21 11 V21 H15 V15 H9 V21 H3Z"/></svg>
+      </button>
+      <span class="spacer"></span>
+      <button class="btn" id="undoBtn" aria-label="ביטול">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#2b2140" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5 L4 10 L9 15"/><path d="M4 10 H14 a6 6 0 0 1 0 12 H10"/></svg>
+      </button>
+      <button class="btn" id="clearBtn" aria-label="מחיקת הכל">
+        <svg viewBox="0 0 24 24" fill="#fff" stroke="#2b2140" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><path d="M5 7 H19 L17.5 21 H6.5Z"/><path d="M3 7 H21 M9 7 V4 H15 V7" fill="none"/></svg>
+      </button>
+      <button class="btn" id="soundBtn" aria-label="צלילים">
+        <svg viewBox="0 0 24 24" fill="#fff" stroke="#2b2140" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><path d="M4 9 H8 L13 5 V19 L8 15 H4Z"/><path id="waves" d="M16.5 9 a4 4 0 0 1 0 6 M19 6.5 a8 8 0 0 1 0 11" fill="none"/></svg>
+      </button>
+      <button class="btn yellow" id="partyBtn" aria-label="חגיגה">
+        <svg viewBox="0 0 24 24" fill="#fff" stroke="#2b2140" stroke-width="2.2" stroke-linejoin="round"><path d="M12 2.5 L14.8 9 L21.5 9.4 L16.3 13.8 L18 20.6 L12 16.9 L6 20.6 L7.7 13.8 L2.5 9.4 L9.2 9Z"/></svg>
+      </button>
+    </div>
+    <div class="stage" id="stage"></div>
+    <div class="pal" id="pal"></div>
+  </section>
+</div>
+<canvas id="confetti"></canvas>
+
+<script>
+(() => {
+  // ---------- drawing helpers ----------
+  const f = n => +n.toFixed(1);
+  const starD = (cx, cy, R, r = R * 0.45, n = 5) => {
+    let d = '';
+    for (let i = 0; i < n * 2; i++) {
+      const a = -Math.PI / 2 + i * Math.PI / n, rr = i % 2 ? r : R;
+      d += (i ? 'L' : 'M') + f(cx + rr * Math.cos(a)) + ' ' + f(cy + rr * Math.sin(a));
+    }
+    return d + 'Z';
+  };
+  const P = d => `<path class="r" d="${d}"/>`;
+  const C = (x, y, r) => `<circle class="r" cx="${x}" cy="${y}" r="${r}"/>`;
+  const E = (x, y, rx, ry) => `<ellipse class="r" cx="${x}" cy="${y}" rx="${rx}" ry="${ry}"/>`;
+  const B = (x, y, w, h, rx = 0) => `<rect class="r" x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}"/>`;
+  const S = (x, y, R, r) => P(starD(x, y, R, r));
+  const L = d => `<path class="d" d="${d}"/>`;
+  const K = (x, y, r) => `<circle class="k" cx="${x}" cy="${y}" r="${r}"/>`;
+  const W = (x, y, r) => `<circle class="w" cx="${x}" cy="${y}" r="${r}"/>`;
+  const BG = `<rect class="r bg" x="2" y="2" width="396" height="396" rx="26"/>`;
+  const ground = (a, b, c) => P(`M2 ${a} Q100 ${b} 200 ${c} T398 ${a - 6} V372 a24 24 0 0 1 -24 24 H26 a24 24 0 0 1 -24 -24Z`);
+  const flower = (x, y) => L(`M${x} ${y + 18} V352`) +
+    [0, 72, 144, 216, 288].map(a => C(f(x + 17 * Math.cos(a * Math.PI / 180)), f(y + 17 * Math.sin(a * Math.PI / 180)), 13)).join('') + C(x, y, 11);
+
+  // ---------- the drawings (all original) ----------
+  const PAGES = [
+    { id: 'castle', t: 'castle', svg:
+      BG + C(42, 44, 22) + P('M326 66 a16 16 0 0 1 8 -28 a22 22 0 0 1 40 0 a16 16 0 0 1 2 28z') + ground(330, 310, 328) +
+      B(135, 184, 22, 20) + B(243, 184, 22, 20) + B(165, 120, 70, 84) + P('M155 122 L200 40 L245 122Z') +
+      L('M200 42 V14') + P('M200 14 L232 22 L200 30Z') + C(200, 160, 14) +
+      B(120, 200, 160, 140) + B(55, 150, 75, 190) + B(270, 150, 75, 190) +
+      P('M45 152 L92 68 L140 152Z') + P('M260 152 L307 68 L355 152Z') +
+      P('M80 222 v-22 a12 12 0 0 1 24 0 v22z') + P('M296 222 v-22 a12 12 0 0 1 24 0 v22z') +
+      P('M200 248 C168 226 184 204 200 218 C216 204 232 226 200 248Z') +
+      P('M172 340 V292 a28 28 0 0 1 56 0 V340Z') + K(217, 316, 4)
+    },
+    { id: 'crown', t: 'castle', svg:
+      BG + S(62, 70, 28) + S(340, 66, 22) + S(344, 332, 20) + S(56, 336, 22) +
+      P('M80 290 L62 140 L135 205 L200 110 L265 205 L338 140 L320 290Z') +
+      C(62, 134, 14) + C(200, 104, 16) + C(338, 134, 14) +
+      P('M200 158 L222 198 L200 238 L178 198Z') + C(126, 242, 13) + C(274, 242, 13) +
+      B(70, 270, 260, 50, 14) + C(200, 295, 15) + E(134, 295, 19, 11) + E(266, 295, 19, 11) +
+      L('M118 92 v18 M109 101 h18 M282 92 v18 M273 101 h18 M200 340 v18 M191 349 h18')
+    },
+    { id: 'cat', t: 'animal', svg:
+      BG + E(200, 362, 168, 26) +
+      P('M285 330 Q372 322 362 252 Q356 220 334 230 Q346 262 336 290 Q322 306 282 304Z') +
+      E(200, 290, 95, 72) +
+      P('M128 132 L130 50 L190 98Z') + P('M272 132 L270 50 L210 98Z') +
+      P('M146 112 L142 74 L176 98Z') + P('M254 112 L258 74 L224 98Z') +
+      C(200, 170, 80) + E(200, 306, 50, 42) + E(160, 356, 30, 16) + E(240, 356, 30, 16) +
+      P('M135 225 Q200 262 265 225 L262 242 Q200 280 138 242Z') + C(200, 264, 11) + L('M193 267 H207') +
+      E(168, 160, 14, 18) + E(232, 160, 14, 18) + K(170, 163, 8) + K(234, 163, 8) + W(173, 159, 3) + W(237, 159, 3) +
+      C(146, 200, 11) + C(254, 200, 11) + P('M189 187 H211 L200 200Z') +
+      L('M200 200 Q200 214 186 214 M200 200 Q200 214 214 214') +
+      L('M118 184 L158 190 M116 200 L156 198 M282 184 L242 190 M284 200 L244 198')
+    },
+    { id: 'butterfly', t: 'animal', svg:
+      BG + ground(340, 320, 338) + flower(58, 296) + flower(342, 296) +
+      P('M195 185 C150 70 40 60 55 145 C65 195 140 210 195 205Z') + P('M195 212 C140 205 75 250 105 300 C135 335 185 280 195 232Z') +
+      C(112, 140, 22) + C(160, 172, 10) + C(138, 262, 15) +
+      '<g transform="matrix(-1 0 0 1 400 0)">' +
+      P('M195 185 C150 70 40 60 55 145 C65 195 140 210 195 205Z') + P('M195 212 C140 205 75 250 105 300 C135 335 185 280 195 232Z') +
+      C(112, 140, 22) + C(160, 172, 10) + C(138, 262, 15) + '</g>' +
+      E(200, 218, 13, 58) + L('M193 134 Q180 100 165 92 M207 134 Q220 100 235 92') +
+      C(162, 90, 8) + C(238, 90, 8) + C(200, 148, 18) + K(194, 145, 3) + K(206, 145, 3) + L('M194 154 Q200 159 206 154')
+    },
+    { id: 'rocket', t: 'space', svg:
+      BG + C(66, 334, 46) + C(52, 322, 9) + C(82, 350, 7) +
+      P('M338 34 a44 44 0 1 0 38 70 a34 34 0 1 1 -38 -70Z') +
+      S(60, 70, 18) + S(128, 132, 11) + S(306, 172, 13) + S(340, 286, 17) + S(276, 360, 11) +
+      P('M163 280 Q168 345 200 378 Q232 345 237 280Z') + P('M180 280 Q186 325 200 352 Q214 325 220 280Z') +
+      P('M155 215 L100 290 L105 326 L152 286Z') + P('M245 215 L300 290 L295 326 L248 286Z') +
+      P('M200 45 C255 95 262 185 250 285 H150 C138 185 145 95 200 45Z') +
+      P('M200 45 C222 65 237 88 245 115 H155 C163 88 178 65 200 45Z') +
+      P('M150 238 H251 V258 H150Z') + B(168, 282, 64, 16, 5) +
+      C(200, 180, 32) + C(200, 180, 21) + L('M188 172 a14 14 0 0 1 10 -8')
+    },
+    { id: 'planet', t: 'space', svg:
+      BG + S(50, 60, 18) + S(92, 150, 9) + S(332, 172, 10) + S(60, 334, 15) + S(350, 330, 17) +
+      C(336, 70, 26) + C(328, 62, 7) + C(346, 80, 5) +
+      '<path class="r" fill-rule="evenodd" d="M50 232 A150 40 0 1 0 350 232 A150 40 0 1 0 50 232Z M80 232 A120 25 0 1 0 320 232 A120 25 0 1 0 80 232Z"/>' +
+      C(200, 232, 110) + C(155, 180, 18) + C(250, 196, 12) + C(205, 300, 13) +
+      P('M50 232 A150 40 0 0 0 350 232 L320 232 A120 25 0 0 1 80 232Z') +
+      L('M178 118 L162 104 M222 118 L238 104 M190 68 L181 50 M210 68 L219 50') +
+      E(200, 118, 24, 20) + C(200, 88, 22) + C(180, 47, 7) + C(220, 47, 7) +
+      C(200, 85, 10) + K(200, 87, 5) + W(202, 84, 2) + L('M191 100 Q200 106 209 100')
+    },
+    { id: 'fish', t: 'sea', svg:
+      BG + ground(340, 325, 342) +
+      P('M40 345 Q20 300 45 260 Q65 220 45 180 Q72 210 66 260 Q50 300 62 345Z') +
+      P('M350 345 Q330 300 352 270 Q370 240 355 210 Q386 240 376 275 Q362 305 372 345Z') +
+      C(62, 90, 12) + C(88, 56, 8) + C(330, 80, 10) + C(312, 50, 6) +
+      P('M285 190 L362 125 Q345 190 362 255Z') + P('M140 130 Q195 55 255 130Z') + P('M165 255 Q195 305 228 258Z') +
+      E(190, 190, 110, 75) +
+      P('M150 122 Q130 190 150 258 L175 262 Q155 190 175 118Z') +
+      P('M220 120 Q200 190 220 260 L243 255 Q223 190 243 125Z') +
+      P('M178 195 Q212 205 206 238 Q184 228 178 195Z') +
+      C(122, 172, 17) + K(125, 174, 8) + W(128, 170, 3) + L('M86 205 Q97 214 108 206')
+    },
+    { id: 'octopus', t: 'sea', svg:
+      BG + ground(342, 328, 344) +
+      P('M30 378 Q55 330 80 378Z') + L('M55 376 V346 M42 376 L48 352 M68 376 L62 352') + S(345, 362, 26, 12) +
+      C(322, 90, 15) + C(346, 52, 10) + C(298, 52, 7) + C(70, 70, 10) +
+      P('M135 215 Q110 270 70 285 Q55 300 80 305 Q135 295 160 225Z') +
+      P('M265 215 Q290 270 330 285 Q345 300 320 305 Q265 295 240 225Z') +
+      P('M165 222 Q150 290 130 330 Q125 350 145 345 Q180 300 190 225Z') +
+      P('M235 222 Q250 290 270 330 Q275 350 255 345 Q220 300 210 225Z') +
+      P('M188 225 Q195 300 200 352 Q205 300 212 225Z') +
+      P('M115 225 C100 60 300 60 285 225Z') +
+      C(200, 132, 12) + C(160, 142, 8) + C(240, 142, 8) +
+      E(170, 178, 18, 22) + E(230, 178, 18, 22) + K(172, 182, 9) + K(232, 182, 9) + W(176, 177, 3) + W(236, 177, 3) +
+      C(146, 208, 10) + C(254, 208, 10) + L('M184 207 Q200 220 216 207')
+    }
+  ];
+
+  const COLORS = ['#ff4d4d', '#ff9f1c', '#ffd93d', '#8ae234', '#2fbf71', '#2ec4b6', '#4cc9f0', '#3a6ff7',
+    '#8b5cf6', '#c77dff', '#ff6fb5', '#ffc2e2', '#a0673a', '#ffcfa3', '#9aa3b5', '#4a4060',
+    'url(#rainbow)', 'url(#dots)', 'url(#gold)', 'magic', '#ffffff'];
+  const PLAIN = COLORS.slice(0, 15);
+  const NOTES = [262, 294, 330, 392, 440, 523, 587, 659, 784, 880];
+
+  // ---------- state ----------
+  const KEY = 'kc-v1';
+  let st = { fills: {}, done: {}, sound: true };
+  try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) st = Object.assign(st, s); } catch (e) {}
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
+
+  let page = null, color = COLORS[10], undo = [], regions = [];
+  const $ = id => document.getElementById(id);
+
+  const buildSvg = p => {
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">${p.svg}</svg>`;
+    const svg = wrap.firstChild;
+    const fills = st.fills[p.id] || [];
+    svg.querySelectorAll('.r').forEach((el, i) => { el.dataset.i = i; if (fills[i]) el.style.fill = fills[i]; });
+    return svg;
+  };
+
+  // ---------- sound ----------
+  let ac = null;
+  const tone = (freq, at = 0, dur = .18, type = 'triangle', vol = .18) => {
+    if (!st.sound) return;
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      const t = ac.currentTime + at, o = ac.createOscillator(), g = ac.createGain();
+      o.type = type; o.frequency.setValueAtTime(freq, t);
+      o.frequency.exponentialRampToValueAtTime(freq * 1.5, t + dur * .6);
+      g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur);
+      o.connect(g).connect(ac.destination); o.start(t); o.stop(t + dur);
+    } catch (e) {}
+  };
+  const fanfare = () => [523, 659, 784, 1047, 784, 1047].forEach((n, i) => tone(n, i * .11, .25, 'square', .08));
+
+  // ---------- effects ----------
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const sparks = (x, y, c) => {
+    if (reduce) return;
+    const fill = c.startsWith('#') ? c : '#ffd93d';
+    for (let i = 0; i < 6; i++) {
+      const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      s.setAttribute('viewBox', '0 0 20 20'); s.setAttribute('class', 'spark');
+      s.innerHTML = `<path d="${starD(10, 10, 9)}" fill="${fill === '#ffffff' ? '#ffd93d' : fill}" stroke="#2b2140" stroke-width="1.5"/>`;
+      const a = Math.random() * Math.PI * 2, d = 40 + Math.random() * 40;
+      s.style.left = x - 11 + 'px'; s.style.top = y - 11 + 'px';
+      s.style.setProperty('--dx', Math.cos(a) * d + 'px'); s.style.setProperty('--dy', Math.sin(a) * d + 'px');
+      document.body.appendChild(s); setTimeout(() => s.remove(), 650);
+    }
+  };
+  const cv = $('confetti'), cx = cv.getContext('2d');
+  let parts = [], raf = 0;
+  const confetti = () => {
+    fanfare();
+    if (reduce) return;
+    cv.width = innerWidth * devicePixelRatio; cv.height = innerHeight * devicePixelRatio;
+    cx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    for (let i = 0; i < 120; i++) parts.push({
+      x: innerWidth / 2, y: innerHeight * .55, vx: (Math.random() - .5) * 16, vy: -8 - Math.random() * 12,
+      r: 7 + Math.random() * 9, a: Math.random() * 6, va: (Math.random() - .5) * .3,
+      c: PLAIN[i % 12], star: i % 3 === 0, life: 0
+    });
+    if (!raf) raf = requestAnimationFrame(tick);
+  };
+  const tick = () => {
+    cx.clearRect(0, 0, innerWidth, innerHeight);
+    parts.forEach(p => {
+      p.vy += .35; p.x += p.vx; p.y += p.vy; p.a += p.va; p.life++;
+      cx.save(); cx.translate(p.x, p.y); cx.rotate(p.a); cx.fillStyle = p.c;
+      if (p.star) cx.fill(new Path2D(starD(0, 0, p.r))); else cx.fillRect(-p.r / 2, -p.r / 4, p.r, p.r / 2);
+      cx.restore();
+    });
+    parts = parts.filter(p => p.y < innerHeight + 40 && p.life < 240);
+    raf = parts.length ? requestAnimationFrame(tick) : 0;
+    if (!raf) cx.clearRect(0, 0, innerWidth, innerHeight);
+  };
+
+  // ---------- home ----------
+  const badge = `<svg class="badge" viewBox="0 0 50 50"><path d="${starD(25, 26, 23, 11)}" fill="#ffd93d" stroke="#2b2140" stroke-width="3.5" stroke-linejoin="round"/></svg>`;
+  const renderHome = () => {
+    const g = $('gallery'); g.innerHTML = '';
+    PAGES.forEach(p => {
+      const b = document.createElement('button');
+      b.className = 'card t-' + p.t; b.setAttribute('aria-label', p.id);
+      b.appendChild(buildSvg(p));
+      if (st.done[p.id]) b.insertAdjacentHTML('beforeend', badge);
+      b.onclick = () => openPage(p);
+      g.appendChild(b);
+    });
+  };
+
+  // ---------- paint ----------
+  const renderPal = () => {
+    const pal = $('pal'); pal.innerHTML = '';
+    COLORS.forEach((c, i) => {
+      const b = document.createElement('button');
+      b.className = 'sw' + (c === color ? ' on' : '');
+      b.setAttribute('aria-label', 'צבע ' + (i + 1));
+      if (c === 'url(#rainbow)') b.style.background = 'conic-gradient(#ff4d4d,#ff9f1c,#ffd93d,#2fbf71,#4cc9f0,#8b5cf6,#ff4d4d)';
+      else if (c === 'url(#dots)') b.style.background = 'radial-gradient(#ff6fb5 30%, transparent 33%) 0 0/16px 16px, #ffc2e2';
+      else if (c === 'url(#gold)') { b.style.background = '#ffcf3d'; b.innerHTML = `<svg viewBox="0 0 20 20"><path d="${starD(10, 10, 9, 3.5, 4)}" fill="#fff6c9"/></svg>`; }
+      else if (c === 'magic') { b.style.background = '#ffffff'; b.innerHTML = `<svg viewBox="0 0 24 24"><path d="M4 20 L14 10" stroke="#2b2140" stroke-width="3" stroke-linecap="round"/><path d="${starD(17, 7, 6.5, 2.8)}" fill="#ffd93d" stroke="#2b2140" stroke-width="1.5" stroke-linejoin="round"/></svg>`; }
+      else if (c === '#ffffff') { b.style.background = '#ffffff'; b.innerHTML = `<svg viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="9" rx="3" transform="rotate(-30 12 12)" fill="#ffc2e2" stroke="#2b2140" stroke-width="2"/></svg>`; }
+      else b.style.background = c;
+      b.onclick = () => { color = c; tone(NOTES[i % NOTES.length], 0, .12, 'sine', .12); renderPal(); };
+      pal.appendChild(b);
+    });
+  };
+
+  const persist = () => {
+    st.fills[page.id] = regions.map(el => el.style.fill || '');
+    save();
+  };
+  const checkDone = () => {
+    const allDone = regions.every(el => el.classList.contains('bg') || (el.style.fill && el.style.fill !== 'rgb(255, 255, 255)' && el.style.fill !== '#ffffff'));
+    if (allDone && !st.done[page.id]) { st.done[page.id] = true; save(); setTimeout(confetti, 250); }
+  };
+
+  const openPage = p => {
+    page = p; undo = [];
+    const stage = $('stage'); stage.innerHTML = '';
+    const svg = buildSvg(p); stage.appendChild(svg);
+    regions = [...svg.querySelectorAll('.r')];
+    svg.addEventListener('pointerdown', e => {
+      const el = e.target.closest('.r'); if (!el) return;
+      e.preventDefault();
+      const c = color === 'magic' ? PLAIN[Math.floor(Math.random() * PLAIN.length)] : color;
+      undo.push([[+el.dataset.i, el.style.fill || '']]);
+      el.style.fill = c;
+      el.classList.remove('pop'); void el.getBBox(); el.classList.add('pop');
+      tone(NOTES[Math.floor(Math.random() * NOTES.length)]);
+      sparks(e.clientX, e.clientY, c);
+      persist(); checkDone();
+    });
+    $('home').hidden = true; $('paint').hidden = false;
+    renderPal();
+  };
+
+  $('homeBtn').onclick = () => { tone(392, 0, .15, 'sine'); $('paint').hidden = true; $('home').hidden = false; renderHome(); };
+  $('undoBtn').onclick = () => {
+    const last = undo.pop(); if (!last) return;
+    last.forEach(([i, v]) => { regions[i].style.fill = v; });
+    tone(330, 0, .14, 'sine'); persist();
+  };
+  let armT = 0;
+  $('clearBtn').onclick = () => {
+    const b = $('clearBtn');
+    if (!b.classList.contains('armed')) {
+      b.classList.add('armed'); tone(220, 0, .2, 'square', .06);
+      clearTimeout(armT); armT = setTimeout(() => b.classList.remove('armed'), 3000);
+      return;
+    }
+    b.classList.remove('armed'); clearTimeout(armT);
+    undo.push(regions.map((el, i) => [i, el.style.fill || '']));
+    regions.forEach(el => { el.style.fill = ''; });
+    tone(523, 0, .12); tone(392, .1, .12); tone(262, .2, .2);
+    persist();
+  };
+  const paintSound = () => { $('soundBtn').classList.toggle('off', !st.sound); $('waves').style.display = st.sound ? '' : 'none'; };
+  $('soundBtn').onclick = () => { st.sound = !st.sound; save(); paintSound(); tone(523); };
+  $('partyBtn').onclick = confetti;
+  $('fsBtn').onclick = () => {
+    try {
+      const d = document;
+      if (d.fullscreenElement) d.exitFullscreen().catch(() => {});
+      else (d.documentElement.requestFullscreen?.() || Promise.resolve()).catch(() => {});
+    } catch (e) {}
+  };
+
+  paintSound();
+  renderHome();
+})();
+</script>
