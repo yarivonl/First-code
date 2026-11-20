@@ -1073,6 +1073,41 @@ body.painting { background-image: url(assets/bg_paint_l.webp); background-color:
       }
       sizes.push(cnt); n++;
     }
+    // merge textures: a cluster of many small, similar-size areas split only by thin lines
+    // (waffle cones, woven baskets, shell plates) becomes one area that fills with one tap
+    const SMALL = N * .004, MAXW = 18, pairs = new Map();
+    const addPair = (a, b) => {
+      if (a < 0 || b < 0 || a === b || sizes[a] > SMALL || sizes[b] > SMALL) return;
+      const k = a < b ? a * 65536 + b : b * 65536 + a; pairs.set(k, (pairs.get(k) || 0) + 1);
+    };
+    for (let y = 0; y < H; y++) for (let x = 0; x < W;) {
+      const i = y * W + x; if (!mask[i]) { x++; continue; }
+      let e = x; while (e < W && mask[y * W + e]) e++;
+      if (x > 0 && e < W && e - x <= MAXW) addPair(owner[i - 1], owner[y * W + e]);
+      x = e;
+    }
+    for (let x = 0; x < W; x++) for (let y = 0; y < H;) {
+      const i = y * W + x; if (!mask[i]) { y++; continue; }
+      let e = y; while (e < H && mask[e * W + x]) e++;
+      if (y > 0 && e < H && e - y <= MAXW) addPair(owner[i - W], owner[e * W + x]);
+      y = e;
+    }
+    const par = Array.from({ length: n }, (_, i) => i);
+    const root = a => { while (par[a] !== a) a = par[a] = par[par[a]]; return a; };
+    pairs.forEach((c, k) => { if (c >= 4) { const a = root(Math.floor(k / 65536)), b = root(k % 65536); if (a !== b) par[b] = a; } });
+    const groups = new Map();
+    for (let l = 0; l < n; l++) { const r = root(l); if (r !== l || groups.has(r)) (groups.get(r) || groups.set(r, [r]).get(r)).push(l); }
+    const remap = new Int32Array(n).map((_, i) => i);
+    groups.forEach(ms => {
+      const uniq = [...new Set(ms)];
+      if (uniq.length < 6) return;
+      const med = uniq.map(l => sizes[l]).sort((a, b) => a - b)[uniq.length >> 1];
+      const keep = uniq.filter(l => sizes[l] > med / 3 && sizes[l] < med * 3);
+      if (keep.length < 6) return;
+      const to = keep[0];
+      keep.forEach(l => { if (l !== to) { remap[l] = to; sizes[to] += sizes[l]; sizes[l] = 0; } });
+    });
+    for (let i = 0; i < N; i++) if (owner[i] >= 0) owner[i] = remap[owner[i]];
     // give every line pixel to its nearest region so fills reach under the ink
     const q = new Int32Array(N); let qh = 0, qt = 0;
     for (let i = 0; i < N; i++) if (owner[i] >= 0) q[qt++] = i;
