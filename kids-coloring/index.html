@@ -539,6 +539,18 @@ body.painting { background-image: url(assets/bg_paint_l.webp); background-color:
   .gallery.cats { grid-template-columns: repeat(5, minmax(0, 1fr)); max-width: max(320px, calc((100vh - 250px) * 2.5 + 88px)); }
 }
 @media (orientation: portrait) and (min-width: 600px) { .gallery.cats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+#fillTool { --c1: #b5f2dc; --c2: #45c9a0; --c3: #2a9d7a; }
+#brushTool { --c1: #ffc7e6; --c2: #ff7cc0; --c3: #d9509b; }
+.btn.tool-on { box-shadow: 0 0 0 4px #fff, 0 0 0 8px rgba(255, 255, 255, .45), inset 0 -6px 0 rgba(0, 0, 0, .1), 0 6px 0 var(--c3), 0 12px 18px rgba(107, 78, 138, .28); transform: scale(1.06); }
+.btn:not(.tool-on)#fillTool, .btn:not(.tool-on)#brushTool { opacity: .7; }
+.brush-opts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; flex-basis: 100%; padding-bottom: 6px; border-bottom: 2px dashed rgba(255, 255, 255, .45); margin-bottom: 4px; }
+.bopt { width: 44px; height: 44px; border-radius: 14px; border: none; padding: 7px; display: grid; place-items: center; background: rgba(255, 255, 255, .45); box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .08); }
+.bopt svg { width: 100%; height: 100%; }
+.bopt .dot { display: block; border-radius: 50%; background: #6b4e8a; }
+.bopt.on { background: #fff; box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .08), 0 0 0 3px #ff9fd0; transform: scale(1.06); }
+@media (orientation: landscape) and (min-width: 700px) { .brush-opts { max-width: 180px; } }
+@media (orientation: portrait) { .brush-opts { flex-basis: 100%; border-bottom: none; } }
 </style>
 
 <svg class="defs" aria-hidden="true">
@@ -585,6 +597,12 @@ body.painting { background-image: url(assets/bg_paint_l.webp); background-color:
         <svg viewBox="0 0 24 24" fill="#fff" stroke="#2b2140" stroke-width="2.4" stroke-linejoin="round"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg>
       </button>
       <span class="spacer"></span>
+      <button class="btn" id="fillTool" aria-label="דלי צבע">
+        <svg viewBox="0 0 24 24" fill="#fff" stroke-width="1.6" stroke-linejoin="round"><path d="M4 10 L11 3 L19 11 L12 18 Z"/><path d="M19 13 C19 13 21.5 16 21.5 17.5 a2.5 2.5 0 0 1 -5 0 C16.5 16 19 13 19 13Z"/></svg>
+      </button>
+      <button class="btn" id="brushTool" aria-label="מכחול">
+        <svg viewBox="0 0 24 24" fill="#fff" stroke-linecap="round"><path d="M20.5 3.5 L11 13" stroke-width="3.6" fill="none"/><path d="M10.5 12.5 C6.5 12.5 5.5 15.5 3.5 20.5 C8.5 20.5 12 19 12 14.5 Z" stroke-width="1"/></svg>
+      </button>
       <button class="btn" id="undoBtn" aria-label="ביטול">
         <svg viewBox="0 0 24 24" fill="none" stroke="#2b2140" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5 L4 10 L9 15"/><path d="M4 10 H14 a6 6 0 0 1 0 12 H10"/></svg>
       </button>
@@ -1093,19 +1111,139 @@ body.painting { background-image: url(assets/bg_paint_l.webp); background-color:
     if (saved) { const si = new Image(); si.src = saved; await si.decode().catch(() => {}); ctx.drawImage(si, 0, 0, 800, 800); }
     const imgData = ctx.getImageData(0, 0, 800, 800);
     art = { p, R, cv, ctx, box, imgData, filled: new Set((st.artFilled || {})[p.id] || []), saveT: 0 };
+    const toXY = e => {
+      const r = cv.getBoundingClientRect();
+      return [(e.clientX - r.left) / r.width * R.W, (e.clientY - r.top) / r.height * R.H];
+    };
     box.addEventListener('pointerdown', e => {
       e.preventDefault();
-      const r = cv.getBoundingClientRect();
-      const x = Math.floor((e.clientX - r.left) / r.width * R.W), y = Math.floor((e.clientY - r.top) / r.height * R.H);
+      const [fx, fy] = toXY(e), x = Math.floor(fx), y = Math.floor(fy);
       if (x < 0 || y < 0 || x >= R.W || y >= R.H) return;
       const L = R.owner[y * R.W + x]; if (L < 0) return;
       const c = color === 'magic' ? PLAIN[Math.floor(Math.random() * PLAIN.length)] : color;
       undo.push({ data: art.imgData.data.slice(), filled: new Set(art.filled) }); if (undo.length > 12) undo.shift();
+      if (tool() === 'brush') {
+        try { box.setPointerCapture(e.pointerId); } catch (err) {}
+        startStroke(L, c, fx, fy);
+        tone(NOTES[Math.floor(Math.random() * NOTES.length)], 0, .12, 'sine', .08);
+        return;
+      }
       paintRegion(L, c);
       tone(NOTES[Math.floor(Math.random() * NOTES.length)]);
       sparks(e.clientX, e.clientY, c);
       persistArt(); checkArtDone();
     });
+    box.addEventListener('pointermove', e => { if (stroke) { e.preventDefault(); const [x, y] = toXY(e); moveStroke(x, y); } });
+    const end = () => { if (stroke) { stroke = null; persistArt(); } };
+    box.addEventListener('pointerup', end);
+    box.addEventListener('pointercancel', end);
+  };
+
+  // ---------- free brush: strokes stay inside the region where they start ----------
+  const BRUSH_SIZES = [9, 20, 38];
+  const BRUSH_KINDS = ['pen', 'glitter', 'heart', 'star'];
+  const tool = () => st.tool === 'brush' ? 'brush' : 'fill';
+  let stroke = null;
+  const tmp = document.createElement('canvas'); tmp.width = tmp.height = 800;
+  const tctx = tmp.getContext('2d', { willReadFrequently: true });
+  const patCache = {};
+  const patternFor = c => {
+    if (!patCache[c]) {
+      const pc = document.createElement('canvas'); pc.width = pc.height = 800;
+      const px = pc.getContext('2d'), id = px.createImageData(800, 800), fn = colorFn(c, 800);
+      for (let i = 0; i < 640000; i++) { const rgb = fn(i % 800, (i / 800) | 0), j = i * 4; id.data[j] = rgb[0]; id.data[j + 1] = rgb[1]; id.data[j + 2] = rgb[2]; id.data[j + 3] = 255; }
+      px.putImageData(id, 0, 0); patCache[c] = tctx.createPattern(pc, 'no-repeat');
+    }
+    return patCache[c];
+  };
+  const startStroke = (L, c, x, y) => {
+    tctx.clearRect(0, 0, 800, 800);
+    const w = BRUSH_SIZES[st.brushSize ?? 1], kind = BRUSH_KINDS.includes(st.brushKind) ? st.brushKind : 'pen';
+    stroke = { L, c, w, kind, x, y, dist: 0, hue: Math.random() * 360 };
+    if (kind === 'heart' || kind === 'star') stamp(x, y); else segment(x, y, x + .01, y);
+  };
+  const strokeFill = () => {
+    const c = stroke.c;
+    if (c === 'url(#rainbow)') return `hsl(${stroke.hue % 360} 85% 60%)`;
+    return c.startsWith('#') ? c : patternFor(c);
+  };
+  const moveStroke = (x, y) => {
+    const s = stroke, d = Math.hypot(x - s.x, y - s.y);
+    if (d < 1.5) return;
+    s.hue += d * .6;
+    if (s.kind === 'heart' || s.kind === 'star') {
+      s.dist += d;
+      const gap = s.w * 1.9;
+      if (s.dist >= gap) { s.dist = 0; stamp(x, y); }
+      s.x = x; s.y = y; return;
+    }
+    segment(s.x, s.y, x, y); s.x = x; s.y = y;
+  };
+  const segment = (x0, y0, x1, y1) => {
+    const s = stroke;
+    tctx.lineCap = tctx.lineJoin = 'round'; tctx.lineWidth = s.w; tctx.strokeStyle = strokeFill();
+    tctx.beginPath(); tctx.moveTo(x0, y0); tctx.lineTo(x1, y1); tctx.stroke();
+    let pad = s.w / 2 + 2;
+    if (s.kind === 'glitter') {
+      for (let k = 0; k < 3; k++) {
+        const t = Math.random(), r = rnd(2, 6), gx = x0 + (x1 - x0) * t + rnd(-s.w, s.w) * .6, gy = y0 + (y1 - y0) * t + rnd(-s.w, s.w) * .6;
+        tctx.fillStyle = Math.random() < .5 ? '#ffffff' : '#fff3b0';
+        tctx.fill(new Path2D(starD(gx, gy, r * 1.6, r * .45, 4)));
+      }
+      pad = s.w + 12;
+    }
+    commit(Math.min(x0, x1) - pad, Math.min(y0, y1) - pad, Math.abs(x1 - x0) + pad * 2, Math.abs(y1 - y0) + pad * 2);
+  };
+  const stamp = (x, y) => {
+    const s = stroke, r = s.w * .75 + 6;
+    tctx.fillStyle = strokeFill();
+    tctx.fill(new Path2D(s.kind === 'heart' ? H(x, y - r * .1, r * .8) : starD(x, y, r * 1.1, r * .5)));
+    s.hue += 40;
+    commit(x - r * 1.6, y - r * 1.6, r * 3.2, r * 3.2);
+    if (s.kind) tone(NOTES[Math.floor(Math.random() * NOTES.length)] * 2, 0, .08, 'sine', .05);
+  };
+  // copy the stroke pixels inside the start region into the fill layer (only the touched box)
+  const commit = (bx, by, bw, bh) => {
+    const R = art.R, W = R.W;
+    bx = Math.max(0, Math.floor(bx)); by = Math.max(0, Math.floor(by));
+    bw = Math.min(W - bx, Math.ceil(bw)); bh = Math.min(R.H - by, Math.ceil(bh));
+    if (bw <= 0 || bh <= 0) return;
+    const t = tctx.getImageData(bx, by, bw, bh).data, d = art.imgData.data, own = R.owner, L = stroke.L;
+    for (let yy = 0; yy < bh; yy++) for (let xx = 0; xx < bw; xx++) {
+      const k = (yy * bw + xx) * 4, a = t[k + 3]; if (!a) continue;
+      const i = (by + yy) * W + bx + xx; if (own[i] !== L) continue;
+      const j = i * 4, f = a / 255;
+      d[j] += (t[k] - d[j]) * f; d[j + 1] += (t[k + 1] - d[j + 1]) * f; d[j + 2] += (t[k + 2] - d[j + 2]) * f; d[j + 3] = 255;
+    }
+    art.ctx.putImageData(art.imgData, 0, 0, bx, by, bw, bh);
+  };
+  const BRUSH_ICONS = {
+    pen: '<svg viewBox="0 0 24 24"><path d="M5 19 C9 12 13 15 19 5" stroke="#6b4e8a" stroke-width="3.2" fill="none" stroke-linecap="round"/></svg>',
+    glitter: `<svg viewBox="0 0 24 24"><path d="M4 20 C8 14 12 15 17 8" stroke="#ff6fb5" stroke-width="3" fill="none" stroke-linecap="round"/><path d="${starD(18, 6, 5, 1.4, 4)}" fill="#ffc93a"/><path d="${starD(8, 9, 3.2, .9, 4)}" fill="#ffc93a"/></svg>`,
+    heart: `<svg viewBox="0 0 24 24"><path d="${H(12, 11, 8)}" fill="#ff6fb5"/></svg>`,
+    star: `<svg viewBox="0 0 24 24"><path d="${starD(12, 12.5, 10, 4.6)}" fill="#ffc93a"/></svg>`
+  };
+  const renderBrushOpts = pal => {
+    const box = document.createElement('div'); box.className = 'brush-opts';
+    BRUSH_SIZES.forEach((sz, i) => {
+      const b = document.createElement('button');
+      b.className = 'bopt' + ((st.brushSize ?? 1) === i ? ' on' : ''); b.setAttribute('aria-label', 'עובי ' + (i + 1));
+      b.innerHTML = `<span class="dot" style="width:${6 + i * 7}px;height:${6 + i * 7}px"></span>`;
+      b.onclick = () => { st.brushSize = i; save(); tone(392 + i * 130, 0, .08, 'sine', .08); renderPal(); };
+      box.appendChild(b);
+    });
+    BRUSH_KINDS.forEach(k => {
+      const b = document.createElement('button');
+      b.className = 'bopt' + ((BRUSH_KINDS.includes(st.brushKind) ? st.brushKind : 'pen') === k ? ' on' : ''); b.setAttribute('aria-label', k);
+      b.innerHTML = BRUSH_ICONS[k];
+      b.onclick = () => { st.brushKind = k; save(); tone(659, 0, .08, 'sine', .08); renderPal(); };
+      box.appendChild(b);
+    });
+    pal.appendChild(box);
+  };
+  const paintTools = () => {
+    $('fillTool').classList.toggle('tool-on', tool() === 'fill');
+    $('brushTool').classList.toggle('tool-on', tool() === 'brush');
   };
   const paintRegion = (L, c) => {
     const { R, imgData } = art, d = imgData.data, own = R.owner, fn = colorFn(c, R.W);
@@ -1319,6 +1457,7 @@ body.painting { background-image: url(assets/bg_paint_l.webp); background-color:
       t.onclick = () => { st.palMode = m; save(); tone(m === 'solid' ? 523 : 659, 0, .1, 'sine', .1); renderPal(); };
       tabs.appendChild(t);
     });
+    if (tool() === 'brush') renderBrushOpts(pal);
     pal.appendChild(tabs);
     (mode === 'solid' ? SOLID : PATTERNS).forEach((c, i) => {
       const b = document.createElement('button');
@@ -1523,6 +1662,9 @@ body.painting { background-image: url(assets/bg_paint_l.webp); background-color:
   const paintSound = () => { $('soundBtn').classList.toggle('off', !st.sound); $('waves').style.display = st.sound ? '' : 'none'; };
   $('soundBtn').onclick = () => { st.sound = !st.sound; save(); paintSound(); tone(523); };
   $('partyBtn').onclick = celebrate;
+  $('fillTool').onclick = () => { st.tool = 'fill'; save(); tone(523, 0, .1, 'sine', .1); paintTools(); renderPal(); };
+  $('brushTool').onclick = () => { st.tool = 'brush'; save(); tone(784, 0, .1, 'sine', .1); paintTools(); renderPal(); };
+  paintTools();
   $('fsBtn').onclick = () => {
     try {
       const d = document;
