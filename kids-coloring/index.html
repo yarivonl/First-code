@@ -479,6 +479,53 @@ body.painting { background-image: url(assets/bg_paint_l.webp); background-color:
   .artbox.pop, .fx .shine, .fx .rays, .fx .twk, .fx .floaty { animation: none; opacity: 0; }
   .fx .bigstar { animation: none; opacity: 1; }
 }
+
+.fx { container-type: size; }
+/* unicorn fly-by with rainbow trail */
+.fx .uniwrap { position: absolute; top: 30%; left: -40%; width: 38%; animation: rw-uni 2.8s .3s cubic-bezier(.45, .05, .55, .95) forwards; }
+.artbox .fx .uniwrap img { position: relative; inset: auto; width: 100%; height: auto; display: block; filter: drop-shadow(0 8px 10px rgba(107, 78, 138, .3)); animation: rw-bob .35s ease-in-out infinite alternate; }
+.fx .uniwrap .trail {
+  position: absolute; right: 72%; top: 34%; height: 30%; width: 400%; border-radius: 999px 0 0 999px; opacity: .9;
+  background: linear-gradient(#ff8a8a 0 16.6%, #ffc46b 0 33.3%, #fff27a 0 50%, #9be89b 0 66.6%, #8fd3ff 0 83.3%, #c9a3ff 0);
+  animation: rw-fade .9s 3.1s forwards;
+}
+@keyframes rw-uni { 0% { left: -40%; transform: translateY(0); } 50% { transform: translateY(-18%); } 100% { left: 108%; transform: translateY(4%); } }
+@keyframes rw-bob { to { transform: translateY(-6%) rotate(-3deg); } }
+@keyframes rw-fade { to { opacity: 0; } }
+/* balloons */
+.artbox .fx .bal { position: absolute; inset: auto; bottom: -45%; height: auto; animation: rw-bal 3.6s ease-in both; }
+@keyframes rw-bal {
+  0% { transform: translate(0, 0); }
+  80% { transform: translate(var(--sway), calc(var(--rise) * .78)) scale(1); opacity: 1; }
+  88% { transform: translate(var(--sway), calc(var(--rise) * .82)) scale(1.3); opacity: 1; }
+  100% { transform: translate(var(--sway), calc(var(--rise) * .84)) scale(.1); opacity: 0; }
+}
+/* fireworks + crown */
+.artbox .fx .fwc { position: absolute; inset: 0; width: 100%; height: 100%; }
+.fx .rays.late { animation-delay: 2s, 0s; animation-duration: 3.4s, 9s; }
+.artbox .fx .crown {
+  position: absolute; inset: auto; left: 50%; top: 50%; width: 48%; height: auto; translate: -50% -50%;
+  filter: drop-shadow(0 12px 20px rgba(200, 140, 0, .45)); animation: rw-crown 3.6s 2s cubic-bezier(.3, 1.4, .5, 1) both;
+}
+@keyframes rw-crown {
+  0% { transform: translateY(-160%) rotate(-12deg); opacity: 0; }
+  22% { transform: translateY(6%) rotate(4deg); opacity: 1; }
+  32% { transform: translateY(0) rotate(0); }
+  50% { transform: scale(1.08); }
+  65% { transform: scale(1); opacity: 1; }
+  100% { transform: translateY(-120%) scale(.3); opacity: 0; }
+}
+/* butterflies */
+.fx .bfly { position: absolute; left: 50%; top: 55%; width: 16%; translate: -50% -50%; transform: scale(.2); opacity: 0; animation: rw-bfly 3.6s ease-out forwards; }
+.artbox .fx .bfly img { position: relative; inset: auto; width: 100%; height: auto; display: block; animation: rw-flap .18s ease-in-out infinite alternate; filter: drop-shadow(0 6px 8px rgba(107, 78, 138, .3)); }
+@keyframes rw-bfly {
+  0% { transform: translate(0, 0) scale(.2) rotate(0); opacity: 0; }
+  12% { opacity: 1; }
+  60% { transform: translate(calc(var(--dx) * .6), calc(var(--dy) * .6)) scale(1) rotate(var(--rot)); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(.9) rotate(calc(var(--rot) * -1)); opacity: 0; }
+}
+@keyframes rw-flap { from { transform: scaleX(1); } to { transform: scaleX(.35); } }
+@media (prefers-reduced-motion: reduce) { .fx .uniwrap, .fx .bal, .fx .crown, .fx .bfly { animation: none; opacity: 0; } }
 </style>
 
 <svg class="defs" aria-hidden="true">
@@ -1169,39 +1216,122 @@ body.painting { background-image: url(assets/bg_paint_l.webp); background-color:
     (SOUNDS[page.sound || page.id] || (() => {}))();
   }
 
-  // reward sequence: pop + shine, twinkles, gold star over light rays, floating hearts/stars, side confetti
-  let fxT = 0;
-  const rewardShow = () => {
-    const box = art.box;
-    box.querySelector('.fx')?.remove(); clearTimeout(fxT);
-    box.classList.remove('pop'); void box.offsetWidth; box.classList.add('pop');
-    const fx = document.createElement('div'); fx.className = 'fx';
-    fx.style.setProperty('--rise', -(box.clientHeight + 80) + 'px');
-    fx.innerHTML = '<div class="shine"></div><div class="rays"></div><img class="bigstar" alt="" src="assets/star.webp">';
-    for (let i = 0; i < 18; i++) {
-      const s = document.createElement('div'), sz = 16 + Math.random() * 26;
-      s.className = 'twk'; s.style.cssText = `left:${6 + Math.random() * 88}%;top:${6 + Math.random() * 88}%;width:${sz}px;height:${sz}px;animation-delay:${(Math.random() * 3).toFixed(2)}s`;
+  // reward sequences: a different celebration each time (never the same twice in a row)
+  let fxT = 0, fwRaf = 0;
+  const REWARDS = ['star', 'unicorn', 'balloons', 'fireworks', 'butterflies'];
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const addTwinkles = (fx, n) => {
+    for (let i = 0; i < n; i++) {
+      const s = document.createElement('div'), sz = rnd(16, 42);
+      s.className = 'twk'; s.style.cssText = `left:${rnd(6, 94)}%;top:${rnd(6, 94)}%;width:${sz}px;height:${sz}px;animation-delay:${rnd(0, 3).toFixed(2)}s`;
       s.innerHTML = `<svg viewBox="0 0 24 24"><path d="${starD(12, 12, 11.5, 2.6, 4)}" fill="#ffe680"/></svg>`;
       fx.appendChild(s);
     }
-    for (let i = 0; i < 16; i++) {
+  };
+  const addFloaties = (fx, n, delay = .5) => {
+    for (let i = 0; i < n; i++) {
       const h = document.createElement('div'), col = PLAIN[(i * 3) % PLAIN.length];
-      h.className = 'floaty'; h.style.cssText = `left:${4 + Math.random() * 90}%;animation-delay:${(.5 + Math.random() * 2.6).toFixed(2)}s;--sway:${Math.round(Math.random() * 60 - 30)}px`;
+      h.className = 'floaty'; h.style.cssText = `left:${rnd(4, 94)}%;animation-delay:${(delay + rnd(0, 2.6)).toFixed(2)}s;--sway:${Math.round(rnd(-30, 30))}px`;
       h.innerHTML = i % 2 ? `<svg viewBox="0 0 24 24"><path d="${H(12, 10.5, 8)}" fill="${col}" stroke="#fff" stroke-width="1.5"/></svg>`
                           : `<svg viewBox="0 0 24 24"><path d="${starD(12, 12.5, 11, 5)}" fill="${col}" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
       fx.appendChild(h);
     }
+  };
+  const BUILD = {
+    star: fx => {
+      fx.insertAdjacentHTML('beforeend', '<div class="rays"></div><img class="bigstar" alt="" src="assets/star.webp">');
+      addTwinkles(fx, 18); addFloaties(fx, 16);
+    },
+    unicorn: fx => {
+      fx.insertAdjacentHTML('beforeend', '<div class="uniwrap"><div class="trail"></div><img alt="" src="assets/fx_unicorn.webp"></div>');
+      addTwinkles(fx, 14); addFloaties(fx, 14, 2.2);
+    },
+    balloons: fx => {
+      for (let i = 0; i < 10; i++) {
+        const b = document.createElement('img'), w = rnd(15, 22);
+        b.className = 'bal'; b.alt = ''; b.src = 'assets/fx_balloon.webp';
+        b.style.cssText = `left:${(i / 10) * 88 + rnd(-3, 5)}%;width:${w}%;filter:hue-rotate(${Math.round(i * 36 + rnd(0, 20))}deg) saturate(1.2) drop-shadow(0 6px 8px rgba(107,78,138,.25));animation-delay:${rnd(0, 1.1).toFixed(2)}s;--sway:${Math.round(rnd(-40, 40))}px`;
+        fx.appendChild(b);
+      }
+      addTwinkles(fx, 8);
+    },
+    fireworks: fx => {
+      fx.insertAdjacentHTML('beforeend', '<canvas class="fwc"></canvas><div class="rays late"></div><img class="crown" alt="" src="assets/fx_crown.webp">');
+      addTwinkles(fx, 10);
+    },
+    butterflies: fx => {
+      for (let i = 0; i < 11; i++) {
+        const a = (i / 11) * Math.PI * 2 + rnd(-.2, .2), d = rnd(55, 85);
+        const w = document.createElement('div');
+        w.className = 'bfly'; w.style.cssText = `--dx:${(Math.cos(a) * d).toFixed(1)}cqw;--dy:${(Math.sin(a) * d - 20).toFixed(1)}cqh;--rot:${Math.round(rnd(-30, 30))}deg;animation-delay:${rnd(0, .9).toFixed(2)}s;filter:hue-rotate(${Math.round(rnd(0, 360))}deg)`;
+        w.innerHTML = `<img alt="" src="assets/fx_butterfly.webp" style="animation-duration:${rnd(.14, .22).toFixed(2)}s">`;
+        fx.appendChild(w);
+      }
+      addTwinkles(fx, 26);
+    }
+  };
+  const runFireworks = fx => {
+    const cv = fx.querySelector('.fwc'); if (!cv || reduce) return;
+    const W = cv.width = fx.clientWidth * devicePixelRatio, Hh = cv.height = fx.clientHeight * devicePixelRatio;
+    const ctx = cv.getContext('2d'); let ps = [];
+    const burst = () => {
+      const x = rnd(.2, .8) * W, y = rnd(.15, .5) * Hh, col = ['#ff6fb5', '#ffd23f', '#4cc9f0', '#8b5cf6', '#2fbf71', '#ff9f1c'][Math.floor(rnd(0, 6))];
+      for (let i = 0; i < 70; i++) { const a = rnd(0, Math.PI * 2), v = rnd(2, 7) * devicePixelRatio; ps.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 1, col: Math.random() < .25 ? '#fff' : col }); }
+    };
+    [150, 800, 1450, 2100, 2750, 3300].forEach(t => setTimeout(burst, t));
+    const t0 = performance.now();
+    const step = () => {
+      ctx.clearRect(0, 0, W, Hh);
+      ps.forEach(p => { p.vx *= .97; p.vy = p.vy * .97 + .09 * devicePixelRatio; p.x += p.vx; p.y += p.vy; p.life -= .014;
+        ctx.globalAlpha = Math.max(0, p.life); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, 3 * devicePixelRatio, 0, 7); ctx.fill(); });
+      ps = ps.filter(p => p.life > 0);
+      fwRaf = performance.now() - t0 < 5000 && cv.isConnected ? requestAnimationFrame(step) : 0;
+    };
+    fwRaf = requestAnimationFrame(step);
+  };
+  const RSOUND = {
+    star: () => { [784, 988, 1175, 1568].forEach((f, i) => tone(f, .55 + i * .07, .3, 'sine', .1)); tone(2093, .9, .6, 'sine', .07); },
+    unicorn: () => {
+      noise(.2, 2.4, 300, 2600, .12);
+      [523, 659, 784, 1047, 1319, 1568, 2093].forEach((f, i) => N(f, .3 + i * .1, .5, 'sine', .06));
+      voice('sawtooth', [[0, 600], [.15, 1100], [.8, 450]], .06, 2.0, { lp: 2500, vib: [16, 90] });
+    },
+    balloons: () => {
+      [0, .3, .6].forEach(t => voice('sine', [[0, 300], [.5, 900]], .06, t));
+      for (let i = 0; i < 7; i++) noise(3.0 + i * .12 + rnd(0, .05), .06, 4000, 1500, .25);
+    },
+    fireworks: () => {
+      [150, 800, 1450, 2100, 2750, 3300].forEach(ms => {
+        const t = ms / 1000;
+        voice('sine', [[0, 500], [.22, 1800]], .03, Math.max(0, t - .25));
+        noise(t, .6, 700, 120, .3);
+        for (let k = 0; k < 5; k++) noise(t + .2 + k * .06, .03, 6000, 4000, .05);
+      });
+      [784, 988, 1175, 1568].forEach((f, i) => tone(f, 1.0 + i * .07, .3, 'sine', .08));
+    },
+    butterflies: () => { for (let i = 0; i < 16; i++) N(rnd(1800, 3200), i * .15 + rnd(0, .05), .12, 'sine', .04); [1047, 1319, 1568].forEach((f, i) => N(f, 2.4 + i * .1, .4, 'triangle', .07)); }
+  };
+  const rewardShow = () => {
+    const box = art.box;
+    box.querySelector('.fx')?.remove(); clearTimeout(fxT); cancelAnimationFrame(fwRaf);
+    box.classList.remove('pop'); void box.offsetWidth; box.classList.add('pop');
+    const pool = REWARDS.filter(r => r !== st.lastReward);
+    const kind = pool[Math.floor(Math.random() * pool.length)];
+    st.lastReward = kind; save();
+    const fx = document.createElement('div'); fx.className = 'fx fx-' + kind;
+    fx.style.setProperty('--rise', -(box.clientHeight + 120) + 'px');
+    fx.innerHTML = '<div class="shine"></div>';
+    BUILD[kind](fx);
     box.appendChild(fx);
-    // ta-da when the star lands, then the page's own tune
-    [784, 988, 1175, 1568].forEach((f, i) => tone(f, .55 + i * .07, .3, 'sine', .1));
-    tone(2093, .9, .6, 'sine', .07);
-    setTimeout(confetti, 700);
-    setTimeout(() => (SOUNDS[page.sound || page.id] || (() => {}))(), 1500);
-    fxT = setTimeout(() => { fx.remove(); box.classList.remove('pop'); }, 5600);
+    if (kind === 'fireworks') runFireworks(fx);
+    RSOUND[kind]();
+    if (kind !== 'fireworks') setTimeout(confetti, kind === 'unicorn' ? 2600 : 700);
+    setTimeout(() => (SOUNDS[page.sound || page.id] || (() => {}))(), kind === 'fireworks' ? 3600 : 1500);
+    fxT = setTimeout(() => { fx.remove(); box.classList.remove('pop'); }, 5800);
   };
 
   const openPage = p => {
-    clearTimeout(aliveT); clearTimeout(fxT);
+    clearTimeout(aliveT); clearTimeout(fxT); cancelAnimationFrame(fwRaf);
     page = p; undo = []; art = null;
     if (p.art) { openArt(p); show('paint'); renderPal(); return; }
     const stage = $('stage'); stage.innerHTML = '';
