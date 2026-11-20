@@ -17,6 +17,7 @@
   --card-sea: #c4efec;
   --card-sweets: #ffd5c7;
   --card-garden: #d4f2c4;
+  --card-princess: #f0d9ff;
   --white: #ffffff;
   --danger: #ff4d4d;
   color-scheme: light;
@@ -104,12 +105,14 @@ button:focus-visible { outline: 4px solid var(--rose); outline-offset: 3px; }
 .t-sea { background: var(--card-sea); }
 .t-sweets { background: var(--card-sweets); }
 .t-garden { background: var(--card-garden); }
+.t-princess { background: var(--card-princess); }
 
 /* category tiles: cover drawing + a progress row of stars */
 .gallery.cats {
-  grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 40px;
-  width: 100%; max-width: max(320px, calc((100vh - 210px) * 1.5 + 44px)); margin-inline: auto; box-sizing: border-box;
+  grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 40px;
+  width: 100%; max-width: max(320px, calc((100vh - 250px) * 2 + 66px)); margin-inline: auto; box-sizing: border-box;
 }
+@media (max-width: 600px) { .gallery.cats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .card .stars {
   position: absolute; left: 50%; bottom: -20px; transform: translateX(-50%);
   display: flex; gap: 4px; padding: 5px 10px;
@@ -257,6 +260,10 @@ g[class^="a-"] { transform-box: view-box; }
 .alive .a-crawl { animation: crawl 3s ease-in-out infinite alternate; }
 .alive .a-glow { animation: glow .8s ease-in-out infinite alternate; }
 .alive .a-rain { animation: rain .8s linear infinite; }
+.alive .a-swish { animation: swish .6s ease-in-out infinite alternate; }
+.alive .a-ride { animation: ride .3s ease-in-out infinite alternate; }
+@keyframes swish { from { transform: skewX(-7deg); } to { transform: skewX(7deg); } }
+@keyframes ride { to { transform: translateY(-6px) rotate(1deg); } }
 @keyframes nod { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
 @keyframes wave { from { transform: rotate(-14deg); } to { transform: rotate(10deg); } }
 @keyframes ear { from { transform: rotate(-14deg); } to { transform: rotate(8deg); } }
@@ -692,6 +699,70 @@ g[class^="a-"] { transform-box: view-box; }
       G('a-rain', P(drop(80, 350)) + P(drop(260, 350)) + P(drop(345, 350)), 200, 360, 'animation-delay:-.4s') +
       G('a-bob2', P(cloud(10, 322, 2.8)) + K(65, 275, 5) + K(95, 275, 5) + L('M70 292 Q80 300 90 292'), 80, 280) +
       G('a-bob2', P(cloud(250, 322, 2.8)) + K(305, 275, 5) + K(335, 275, 5) + L('M310 292 Q320 300 330 292'), 320, 280, 'animation-delay:-.45s')
+    },
+    // ===== princesses =====
+    { id: 'princess', svg:
+      BG + TW(55, 60, 18, undefined, 0) + TW(345, 70, 16, undefined, 1) + TW(340, 250, 13, undefined, 2) + TW(60, 240, 13, undefined, 3) +
+      G('a-beat', P(H(80, 150, 14)), 80, 150) + G('a-beat', P(H(325, 160, 14)), 325, 160, 'animation-delay:-.3s') +
+      ground(352, 340, 354) +
+      G('a-nod',
+        P('M150 100 Q140 60 200 48 Q260 60 250 100 Q262 160 245 190 Q225 175 225 140 L175 140 Q175 175 155 190 Q138 160 150 100Z') +
+        G('a-swish',
+          P('M175 212 Q140 280 92 362 Q200 390 308 362 Q260 280 225 212Z') +
+          P('M106 338 Q200 364 294 338 L308 362 Q200 390 92 362Z') +
+          P(H(150, 300, 10)) + P(H(200, 312, 10)) + P(H(250, 300, 10)), 200, 212) +
+        P('M176 150 Q188 142 200 152 Q212 142 224 150 L227 214 H173Z') + B(170, 206, 60, 14, 7) +
+        P('M162 160 Q140 190 148 228 Q156 232 160 226 Q156 196 174 168Z') + P('M238 160 Q260 190 252 228 Q244 232 240 226 Q244 196 226 168Z') +
+        C(154, 230, 8) + C(246, 230, 8) + C(170, 155, 14) + C(230, 155, 14) +
+        B(192, 128, 16, 24, 4) + C(200, 100, 40) +
+        P('M160 92 Q165 58 200 56 Q235 58 240 92 Q222 76 200 84 Q178 76 160 92Z') +
+        P('M176 62 L182 38 L192 54 L200 32 L208 54 L218 38 L224 62Z') +
+        G('a-blink', K(186, 104, 4.5) + K(214, 104, 4.5) + W(188, 102, 1.6) + W(216, 102, 1.6), 200, 104) +
+        C(178, 118, 7) + C(222, 118, 7) + L('M190 122 Q200 130 210 122 M181 99 l-4 -4 M219 99 l4 -4'), 200, 380)
+    },
+    { id: 'portrait', svg:
+      BG + G('a-beat', P(H(55, 70, 16)), 55, 70) + G('a-beat', P(H(345, 70, 16)), 345, 70, 'animation-delay:-.3s') +
+      TW(50, 200, 14, undefined, 0) + TW(350, 210, 14, undefined, 1) +
+      G('a-sway3', P('M110 150 Q100 60 200 50 Q300 60 290 150 Q300 230 320 300 Q300 340 270 330 L130 330 Q100 340 80 300 Q100 230 110 150Z'), 200, 60) +
+      B(180, 250, 40, 60, 10) +
+      P('M90 396 Q95 320 160 300 Q200 345 240 300 Q305 320 310 396Z') +
+      L('M172 302 Q200 330 228 302') + G('a-beat', P(H(200, 334, 9)), 200, 334) +
+      G('a-head',
+        E(200, 180, 70, 80) +
+        P('M130 170 Q120 95 200 92 Q280 95 270 170 Q255 130 215 120 Q170 130 150 175 Q140 178 130 170Z') +
+        P('M150 108 L160 70 L178 92 L200 58 L222 92 L240 70 L250 108 Q200 96 150 108Z') + G('a-pulse', C(200, 84, 7), 200, 84) +
+        G('a-spin4', [0, 72, 144, 216, 288].map(a => C(f(262 + 12 * Math.cos(a * Math.PI / 180)), f(140 + 12 * Math.sin(a * Math.PI / 180)), 10)).join(''), 262, 140) + C(262, 140, 8) +
+        G('a-blink', E(175, 185, 10, 12) + E(225, 185, 10, 12) + K(176, 187, 6) + K(226, 187, 6) + W(178, 184, 2) + W(228, 184, 2), 200, 185) +
+        L('M166 176 l-6 -5 M170 173 l-3 -7 M234 176 l6 -5 M230 173 l3 -7 M200 196 Q196 208 202 210') +
+        C(162, 212, 10) + C(238, 212, 10) + P('M186 225 Q200 238 214 225 Q200 230 186 225Z'), 200, 300)
+    },
+    { id: 'carriage', svg:
+      BG + TW(60, 60, 16, undefined, 0) + TW(340, 55, 18, undefined, 1) + TW(200, 40, 12, undefined, 2) +
+      G('a-beat', P(H(60, 150, 14)), 60, 150) + G('a-beat', P(H(345, 150, 14)), 345, 150, 'animation-delay:-.3s') +
+      ground(330, 322, 332) +
+      G('a-ride',
+        P('M175 144 L178 115 L190 128 L200 106 L210 128 L222 115 L225 144Z') + C(200, 100, 7) +
+        P('M110 270 Q100 150 200 140 Q300 150 290 270Z') +
+        P('M165 268 V190 Q165 168 200 168 Q235 168 235 190 V268Z') + P('M178 215 V195 Q178 182 200 182 Q222 182 222 195 V215Z') + P(H(200, 240, 9)) +
+        L('M120 225 q15 -20 30 0 M250 225 q15 -20 30 0') +
+        G('a-flicker', B(88, 196, 18, 28, 5) + B(294, 196, 18, 28, 5), 200, 210) +
+        B(100, 262, 200, 16, 8) +
+        G('a-spin', C(140, 292, 38) + L('M140 254 V330 M102 292 H178 M113 265 L167 319 M167 265 L113 319') + C(140, 292, 9), 140, 292) +
+        G('a-spin', C(262, 292, 38) + L('M262 254 V330 M224 292 H300 M235 265 L289 319 M289 265 L235 319') + C(262, 292, 9), 262, 292), 200, 300)
+    },
+    { id: 'frogprince', svg:
+      BG + G('a-buzz', E(322, 98, 8, 11) + E(334, 98, 8, 11) + E(328, 112, 12, 8) + K(337, 110, 2), 328, 110) +
+      G('a-sway', E(350, 196, 9, 24) + L('M350 220 V292'), 350, 292) + G('a-sway2', E(372, 220, 8, 20) + L('M372 240 V292'), 372, 292) +
+      ground(290, 275, 292) + L('M40 330 q15 -8 30 0 M300 360 q15 -8 30 0 M60 370 q12 -6 24 0') +
+      P('M55 300 L65 272 L76 292 L88 264 L100 292 L111 272 L121 300Z') +
+      E(210, 325, 108, 30) + L('M210 325 L298 310') +
+      G('a-jump',
+        E(142, 302, 30, 18) + E(276, 302, 30, 18) + E(208, 272, 70, 50) + E(208, 290, 40, 28) +
+        E(178, 318, 18, 9) + E(238, 318, 18, 9) +
+        P('M188 165 L191 125 L201 140 L208 118 L215 140 L225 125 L228 165Z') +
+        E(208, 210, 64, 46) + C(172, 168, 22) + C(244, 168, 22) +
+        G('a-blink', K(174, 171, 9) + K(246, 171, 9) + W(177, 167, 3) + W(249, 167, 3), 208, 170) +
+        C(160, 228, 9) + C(256, 228, 9) + L('M168 218 Q208 248 248 218'), 208, 325)
     }
   ];
 
@@ -797,10 +868,27 @@ g[class^="a-"] { transform-box: view-box; }
     rainbow: () => {
       for (let i = 0; i < 14; i++) voice('sine', [[0, 1800 + Math.random() * 1200], [.05, 1200]], .04, i * .07 + Math.random() * .05);
       [523, 587, 659, 698, 784, 880, 988, 1047].forEach((f, i) => N(f, 1.2 + i * .1, .35, 'sine', .06));
+    },
+    princess: () => {
+      [784, 988, 1175, 988, 784, 988, 1175, 1319, 1175, 988, 784, 659].forEach((f, i) => N(f, i * .22, .3, 'triangle', .08));
+      [196, 262, 247, 196].forEach((f, i) => N(f, i * .66, .6, 'sine', .06));
+    },
+    portrait: () => {
+      [523, 659, 784, 1047, 1319, 1568].forEach((f, i) => N(f, i * .07, .5, 'sine', .06));
+      [659, 784, 880, 784, 659].forEach((f, i) => voice('sine', [[0, f], [.32, f]], .1, .7 + i * .34, { vib: [5, 8] }));
+    },
+    carriage: () => {
+      for (let i = 0; i < 8; i++) voice('triangle', [[0, i % 2 ? 650 : 820], [.04, 480]], .12, i * .25);
+      [2093, 2349, 2637, 2349, 2093].forEach((f, i) => N(f, 2.0 + i * .1, .3, 'sine', .05));
+    },
+    frogprince: () => {
+      [0, .18, .9, 1.08].forEach(t => voice('square', [[0, 180], [.08, 260], [.12, 160]], .1, t, { lp: 900 }));
+      [1319, 1568, 2093, 2637].forEach((f, i) => N(f, 1.7 + i * .09, .35, 'sine', .06));
     }
   };
 
   const CATS = [
+    { id: 'princess', pages: ['princess', 'portrait', 'carriage', 'frogprince'] },
     { id: 'castle', pages: ['castle', 'crown', 'unicorn', 'wand'] },
     { id: 'animal', pages: ['cat', 'butterfly', 'dog', 'bunny'] },
     { id: 'space', pages: ['rocket', 'planet', 'ufo', 'moon'] },
